@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#121922">
+<title>ASAS 360° Business Suite — Preview</title>
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<div class="shell">
+<aside class="sidebar">
+ <div class="brand"><span class="orb">◉</span><span>ASAS <em>360°</em><small>BUSINESS SUITE</small></span></div>
+ <div class="sideheading">WORKSPACE</div>
+ <nav id="navigation" aria-label="القائمة">
+ <button data-view="home" class="selected">▦ &nbsp; لوحة التحكم</button>
+ <button data-view="crm">◎ &nbsp; العملاء والمبيعات</button>
+ <button data-view="erp">▤ &nbsp; المخزون و ERP</button>
+ <button data-view="workflow">◇ &nbsp; سير الموافقات</button>
+ <button data-view="permissions">♙ &nbsp; الصلاحيات</button>
+ <button data-view="ads">◈ &nbsp; ASAS Ads</button>
+ </nav>
+ <p class="asidefoot">● Public Preview<br><small>Demo only • Not a production system</small></p>
+</aside>
+<main class="content">
+<header class="top">
+ <div><span class="overline">ASAS 360° BUSINESS SUITE</span><h1 id="viewTitle">لوحة التحكم</h1></div>
+ <div class="selectors"><select id="company" aria-label="الشركة"><option value="atlas">شركة أطلس للتجارة</option><option value="vision">شركة الرؤية للخدمات</option></select><select id="role" aria-label="صلاحية العرض التجريبي"><option value="platform">ASAS Platform Admin</option><option value="owner">Company Super Admin</option><option value="employee">Sales Employee</option></select></div>
+</header>
+<div class="demo-warning"><b>DEMO</b> هذه نسخة للمعاينة ببيانات افتراضية. تغيير الدور أو الشركة هنا لا يمثّل حماية حقيقية، ولا توجد قاعدة بيانات أو جلسات مستخدمين.</div>
+<section id="home" class="view current">
+ <div class="lead"><div><span class="overline">UNIFIED BUSINESS OPERATIONS</span><h2>كل أعمال شركتك، بمكان واحد.</h2><p>إدارة العملاء، المبيعات، المخازن والصلاحيات ضمن تجربة أعمال موحّدة.</p></div><span class="version">V5 • PUBLIC PREVIEW</span></div>
+ <div id="kpis" class="kpis"></div>
+ <div class="headrow"><div><h3>مساحة شركائنا الإعلانية</h3><p>إعلان متحرك دائم، مع إعلان ASAS احتياطي عند عدم وجود معلنين</p></div><span class="chip">ASAS Ads</span></div>
+ <div id="adBanner" class="adbanner" aria-label="الإعلان الحالي"></div>
+ <div class="adbar"><span id="adStatus">ASAS 360°</span><div><button id="adPrev" aria-label="الإعلان السابق">›</button><button id="adPause" aria-label="إيقاف التدوير">Ⅱ</button><button id="adNext" aria-label="الإعلان التالي">‹</button></div></div>
+ <div class="columns"><article class="card"><h3>أحدث الفرص</h3><div id="latestLeads"></div></article><article class="card"><h3>طلبات الموافقة</h3><div id="latestApprovals"></div></article></div>
+</section>
+<section id="crm" class="view">
+ <div class="headrow"><div><h2>إدارة علاقات العملاء CRM</h2><p>فرص ومتابعات حسب الشركة المحددة — بيانات تجريبية</p></div><button class="mainbtn" id="addCustomer">+ إضافة عميل</button></div>
+ <div class="card"><div class="headrow"><h3>قائمة العملاء</h3><input id="customerSearch" type="search" placeholder="بحث عن عميل..." aria-label="بحث"></div><div class="scroll"><table><thead><tr><th>العميل</th><th>مرحلة البيع</th><th>القيمة</th><th>المسؤول</th></tr></thead><tbody id="customersTable"></tbody></table></div></div>
+</section>
+<section id="erp" class="view"><div class="headrow"><div><h2>المخازن وERP</h2><p>واجهة أولية — المحرك المالي ERPNext غير مربوط حالياً</p></div><span class="chip">Prototype</span></div><div class="card"><h3>الأصناف والكميات</h3><div class="scroll"><table><thead><tr><th>المنتج</th><th>الرمز</th><th>المخزون</th><th>الحالة</th></tr></thead><tbody id="inventoryTable"></tbody></table></div></div></section>
+<section id="workflow" class="view"><div class="headrow"><div><h2>مسارات الموافقات</h2><p>مراحل الموافقة على المشتريات والطلبات</p></div></div><div class="card" id="approvalTable"></div></section>
+<section id="permissions" class="view"><div class="headrow"><div><h2>الأدوار والصلاحيات</h2><p>المستويات منفصلة بين إدارة ASAS وإدارة كل شركة</p></div></div><div class="columns"><div class="card"><h3>الدور الحالي</h3><p id="roleNote"></p></div><div class="card"><h3>متطلبات أمن الإنتاج</h3><p>تطبيق RBAC + ABAC على الخادم وقاعدة البيانات، وسجلات تدقيق، وفصل بيانات الشركات وRLS. هذه متطلبات وليست مفعّلة في النسخة العامة.</p></div></div></section>
+<section id="ads" class="view"><div class="headrow"><div><h2>إدارة الإعلانات المتحركة</h2><p>حتى خمسة إعلانات مدفوعة وإعلان ASAS 360° الافتراضي الدائم</p></div><span class="chip">DEMO</span></div>
+ <div class="card" id="adRestricted" hidden><h3>إدارة الإعلانات مركزية</h3><p>هذه الشاشة مخصصة لمدير منصة ASAS فقط.</p></div>
+ <div id="adsAdmin" class="columns">
+ <form class="card" id="adForm"><h3>إضافة إعلان تجريبي</h3><label>المعلن<input name="advertiser" maxlength="60" required placeholder="اسم الشركة"></label><label>النص المتحرك<input name="headline" maxlength="120" required placeholder="عنوان الإعلان"></label><label>وصف مختصر<input name="subtitle" maxlength="180" placeholder="تفاصيل إضافية"></label><label>نوع المحتوى<select name="format"><option value="motion">Motion Text</option><option value="video">Video (MP4/WebM HTTPS)</option></select></label><label>رابط فيديو HTTPS<input name="video" type="url" placeholder="https://example.com/ad.mp4"></label><label>رابط المعلن HTTPS<input name="link" type="url" placeholder="https://example.com"></label><button class="mainbtn" type="submit">إضافة الحملة</button><p class="small">المدخلات تبقى مؤقتة بالذاكرة وتختفي عند تحديث الصفحة.</p></form>
+ <div class="card"><div class="headrow"><h3>الإعلانات المدفوعة</h3><span class="chip" id="adCount">0 / 5</span></div><div id="adCampaigns"></div></div>
+ </div>
+</section>
+<footer>© ASAS 360° • Public demonstration only • <a href="https://asas360.com" target="_blank" rel="noopener noreferrer">asas360.com</a></footer>
+</main>
+</div>
+</body></html>

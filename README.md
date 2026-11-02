@@ -1,25 +1,28 @@
 # ASAS 360° Business Suite
 
-An integrated, modular business platform under **ASAS 360°**.
+The owner has chosen a **Public** GitHub repository, so the source and files here are publicly readable.
 
-## Product scope
+## Public demo (static)
 
-- Proprietary ASAS Core with tenant isolation, company administration, delegated roles and permissions.
-- CRM: customers, contacts, pipelines, activities, tasks, dashboards and reports.
-- ERP: planned integration with ERPNext for accounting, inventory, purchasing and operational workflows.
-- ASAS Ads: up to **five paid active campaigns** rotating in the dashboard; when none are active, an animated **ASAS 360° house advertisement** must always appear.
-- Unified login and module-based subscriptions, with company owners and platform administrators kept separate.
+A responsive **demo only** business dashboard is provided by the files in the repository root:
+- index.html
+- assets/site.css
+- assets/site.js
 
-## Project stage
+This preview illustrates CRM opportunities, stock/ERP, approval workflows, user roles and animated ASAS Ads (up to 5 paid demo campaigns plus permanent ASAS house-ad fallback). Its data is fictional; changing the selected company/role does not enforce real authorization. Campaigns are not stored.
 
-**Foundation / work in progress — not production-ready.**
+If GitHub Pages is enabled from the main branch / root folder, the demo URL is:
+https://ahmedwaleed07.github.io/360-Business-Suite-/
 
-The complete V5 backend starter, schema drafts and local tests are prepared separately for review and secure import. No production database or payment system has been connected or deployed.
+## Commercial architecture (planned)
 
-## Technology direction
+- Proprietary ASAS Core and CRM, modular multi-tenant subscription platform
+- Supabase Auth/PostgreSQL with real RLS policies, separate from MIRA
+- Cloudflare Workers for secured APIs; Cloudflare Pages or equivalent for commercial frontend
+- ERPNext separately hosted and integrated through server-to-server APIs
 
-React + TypeScript for the dashboard, Cloudflare Workers API, Supabase Auth and PostgreSQL with RLS, and an isolated ERPNext instance/API for ERP modules.
+GitHub Pages is for this **static demonstration only**; GitHub restricts its use to host commercial SaaS and sensitive transactions.
 
-**Security:** Do not commit credentials, .env files, service-role keys, or customer data. All tenant isolation and authorization must be enforced server-side and verified with integration tests before commercial rollout.
+Do not commit secrets, real tenant data, access tokens or Supabase service role credentials. The locally tested V5 backend is **not yet hosted or connected**.
 
-© ASAS 360°. Proprietary ASAS application source to be added only after repository access/visibility is verified.
+See docs/PAGES-DEPLOYMENT.md and docs/IMPLEMENTATION-STATUS.md.

@@ -1,14 +1,14 @@
-# Establishment status — 2 November 2026
+# ASAS Business Suite status
 
-- [x] New GitHub repository identified as `ahmedwaleed07/360-Business-Suite-`.
-- [x] Product scope and hybrid architecture approved.
-- [x] Initial non-sensitive repository documentation added.
-- [ ] Change repository visibility from Public to **Private** before publishing proprietary V5 source.
-- [ ] Import complete locally tested V5 starter project.
-- [ ] Create and validate a dedicated ASAS Supabase project. **Never reuse MIRA's database.** Cost and authorization must be checked before creating paid resources.
-- [ ] Deploy development API to an independent Cloudflare environment.
-- [ ] Apply and audit database migrations on an isolated staging database.
-- [ ] Test Supabase Auth, RLS isolation, admin permissions, audit trails and paid-ad fallback.
-- [ ] Connect ERPNext only after core authorization is validated.
+Verified initial GitHub repository: Public, name ahmedwaleed07/360-Business-Suite-.
+Public demo frontend files added to main: index.html, assets/site.css, assets/site.js.
+Public Pages deployment instructions added in docs/PAGES-DEPLOYMENT.md.
+The source code and mock data are intentionally public and non-sensitive.
+This is not a commercial or secure production deployment.
 
-This file documents work status, not a claim of live deployment or completed security validation.
+Pending:
+- Enable and verify GitHub Pages in repository settings.
+- Review V5 backend code and deploy it separately to Cloudflare Workers.
+- Create dedicated ASAS Supabase project (not MIRA), review pricing and obtain approval if billing would increase.
+- Apply/test SQL/RLS in isolated staging, add authentication and protected APIs.
+- Integrate ERPNext, billing, role-level auditing and production ads.
