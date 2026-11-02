@@ -52,3 +52,56 @@ test("When ad storage fails, house ad is still shown",async()=>{
  const data=await body(await app.fetch(req("/public/ads"),mock));
  assert.equal(data.fallback,true);
 });
+
+test("Verified users still cannot access organizations without an active membership",async()=>{
+ const saved=globalThis.fetch;
+ globalThis.fetch=certs;
+ const sqlSeen=[];
+ const db={prepare(sql){sqlSeen.push(sql);return {bind(...args){return {first:async()=>null}}}}};
+ try {
+  const r=await app.fetch(req("/api/organizations/other-company/crm/accounts",{headers:{"Cf-Access-Jwt-Assertion":jwt()}}),{...config,DB:db});
+  assert.equal(r.status,404);
+  assert.ok(sqlSeen[0].includes("organization_id=?"));
+  assert.ok(sqlSeen[0].includes("user_id=?"));
+ }finally{globalThis.fetch=saved}
+});
+test("Sales role can only list accounts owned by the verified identity",async()=>{
+ const saved=globalThis.fetch;globalThis.fetch=certs;
+ const sqlSeen=[],bindSeen=[];
+ const db={prepare(sql){sqlSeen.push(sql);return {bind(...args){bindSeen.push(args);return {
+  first:async()=>({role:"sales"}),
+  all:async()=>({results:[{id:"1",name:"Assigned",stage:"lead",owner_user_id:"user-1",created_at:"2026-11-02"}]})
+ }}}}};
+ try {
+  const r=await app.fetch(req("/api/organizations/org1/crm/accounts",{headers:{"Cf-Access-Jwt-Assertion":jwt()}}),{...config,DB:db});
+  assert.equal(r.status,200);
+  assert.equal((await body(r)).accounts.length,1);
+  assert.match(sqlSeen[1],/organization_id=\? AND owner_user_id=\?/);
+  assert.deepEqual(bindSeen[1],["org1","user-1"]);
+ }finally{globalThis.fetch=saved}
+});
+test("Viewer cannot create CRM accounts, even when claiming an admin role in request body",async()=>{
+ const saved=globalThis.fetch;globalThis.fetch=certs;
+ const db={prepare(){return {bind(){return {first:async()=>({role:"viewer"})}}}}};
+ try {
+  const r=await app.fetch(req("/api/organizations/org1/crm/accounts",{method:"POST",headers:{"Cf-Access-Jwt-Assertion":jwt(),"Content-Type":"application/json"},body:JSON.stringify({name:"Spoof",role:"owner"})}),{...config,DB:db});
+  assert.equal(r.status,403);
+ }finally{globalThis.fetch=saved}
+});
+test("Authorized sales creation is scoped and audit logged using one D1 batch",async()=>{
+ const saved=globalThis.fetch;globalThis.fetch=certs;
+ const prepared=[],batches=[];
+ const db={prepare(sql){return {bind(...args){prepared.push({sql,args});return {first:async()=>({role:"sales"})}}}},batch:async statements=>{batches.push(statements);return []}};
+ try {
+  const r=await app.fetch(req("/api/organizations/org1/crm/accounts",{method:"POST",headers:{"Cf-Access-Jwt-Assertion":jwt(),"Content-Type":"application/json"},body:JSON.stringify({name:"New Account",stage:"lead",owner_user_id:"another-user"})}),{...config,DB:db});
+  assert.equal(r.status,201);
+  const payload=await body(r);
+  assert.equal(payload.owner_user_id,"user-1");
+  assert.equal(batches.length,1);
+  assert.equal(batches[0].length,2);
+  const account=prepared.find(p=>p.sql.startsWith("INSERT INTO crm_accounts"));
+  assert.equal(account.args[1],"org1");
+  assert.equal(account.args[4],"user-1");
+  assert.ok(prepared.some(p=>p.sql.startsWith("INSERT INTO audit_events")));
+ }finally{globalThis.fetch=saved}
+});
