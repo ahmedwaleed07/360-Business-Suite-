@@ -1,42 +1,140 @@
-// ASAS Business Suite — public-only Cloudflare Worker scaffold.
-// NO protected business or user API is implemented until real authentication
-// and tenant authorization are independently verified.
+// ASAS 360° Business Suite – Cloudflare-first staging API.
+// Production authorization must be configured with a valid Cloudflare Access
+// application, and the SaaS customer-login system is a separate deliverable.
+// Protected endpoints fail closed whenever Access is not configured.
 const HOUSE_AD = Object.freeze({
-  id: "asas-house",
-  advertiser_name: "ASAS 360°",
+  id: "asas-house", advertiser_name: "ASAS 360°",
   headline: "Your Business. Our Vision.",
   subtitle: "CRM • ERP • Integrated Business Solutions",
-  format: "motion",
-  destination_url: "https://asas360.com",
-  duration_seconds: 15,
-  house_ad: true,
+  format: "motion", destination_url: "https://asas360.com",
+  duration_seconds: 15, house_ad: true
 });
-const json = (value, status = 200) => new Response(JSON.stringify(value), {
-  status, headers: { "content-type":"application/json; charset=utf-8", "cache-control":"no-store", "x-content-type-options":"nosniff" },
-});
+const noCache = {"Cache-Control":"no-store","X-Content-Type-Options":"nosniff"};
+function json(data,status=200,extra={}) {
+  return new Response(JSON.stringify(data),{status,headers:{"Content-Type":"application/json; charset=utf-8",...noCache,...extra}});
+}
+function cors(request,env) {
+  const origin=request.headers.get("Origin");
+  const allowed=typeof env?.PUBLIC_PREVIEW_ORIGIN==="string" ? env.PUBLIC_PREVIEW_ORIGIN : "";
+  if (!origin || !allowed || origin!==allowed) return {};
+  return {"Access-Control-Allow-Origin":origin,"Vary":"Origin"};
+}
+function decodePart(part) {
+  if(typeof part!=="string" || part.length>20000 || !/^[A-Za-z0-9_-]+$/.test(part)) throw new Error("invalid token");
+  const base64=part.replace(/-/g,"+").replace(/_/g,"/");
+  const decoded=atob(base64.padEnd(Math.ceil(base64.length/4)*4,"="));
+  return Uint8Array.from(decoded,c=>c.charCodeAt(0));
+}
+function parsedJson(bytes) {
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+function accessConfig(env) {
+  const domain=env?.ACCESS_TEAM_DOMAIN;
+  const aud=env?.ACCESS_AUD;
+  if(typeof domain!=="string"||typeof aud!=="string"||!aud.trim())return null;
+  try {
+    const u=new URL(domain);
+    if(u.protocol!=="https:"||u.username||u.password||u.pathname!=="/"||u.search||u.hash||!u.hostname.endsWith(".cloudflareaccess.com"))return null;
+    return {issuer:u.origin,aud};
+  }catch{return null}
+}
+export async function validateAccessToken(token,config,fetcher=fetch) {
+  if(typeof token!=="string"||token.length>20000)return null;
+  const parts=token.split(".");
+  if(parts.length!==3)return null;
+  try {
+    const header=parsedJson(decodePart(parts[0]));
+    const payload=parsedJson(decodePart(parts[1]));
+    if(header.alg!=="RS256"||!header.kid||typeof header.kid!=="string"||header.kid.length>256)return null;
+    const now=Math.floor(Date.now()/1000);
+    const audience=Array.isArray(payload.aud)?payload.aud:[payload.aud];
+    if(payload.iss!==config.issuer||!audience.includes(config.aud)||typeof payload.sub!=="string"||!payload.sub||payload.sub.length>256)return null;
+    if(!Number.isFinite(payload.exp)||payload.exp<=now||!Number.isFinite(payload.iat)||payload.iat>now+60)return null;
+    if(payload.nbf!==undefined&&(!Number.isFinite(payload.nbf)||payload.nbf>now))return null;
+    const r=await fetcher(config.issuer+"/cdn-cgi/access/certs",{redirect:"error"});
+    if(!r.ok)return null;
+    const certs=await r.json();
+    const key=(certs.keys||[]).find(k=>k.kid===header.kid&&k.kty==="RSA"&&(!k.alg||k.alg==="RS256")&&(!k.use||k.use==="sig"));
+    if(!key)return null;
+    const publicKey=await crypto.subtle.importKey("jwk",key,{name:"RSASSA-PKCS1-v1_5",hash:"SHA-256"},false,["verify"]);
+    const valid=await crypto.subtle.verify("RSASSA-PKCS1-v1_5",publicKey,decodePart(parts[2]),new TextEncoder().encode(parts[0]+"."+parts[1]));
+    return valid?{userId:payload.sub}:null;
+  }catch{return null}
+}
+async function accessPrincipal(request,env) {
+  const config=accessConfig(env);
+  if(!config)return {error:json({error:"identity_provider_not_configured"},503)};
+  const jwt=request.headers.get("Cf-Access-Jwt-Assertion");
+  if(!jwt)return {error:json({error:"not_authenticated"},401)};
+  const principal=await validateAccessToken(jwt,config);
+  if(!principal)return {error:json({error:"invalid_session"},401)};
+  return {principal};
+}
+async function requireMembership(db,orgId,userId) {
+  return db.prepare("SELECT role FROM memberships WHERE organization_id=? AND user_id=? AND status='active' LIMIT 1").bind(orgId,userId).first();
+}
+const validOrg=/^[a-zA-Z0-9_-]{1,64}$/;
+const validStages=new Set(["lead","qualified","proposal","negotiation","won","lost"]);
+function leadRow(row) {
+  return {id:row.id,name:row.name,stage:row.stage,owner_user_id:row.owner_user_id,created_at:row.created_at};
+}
+async function crmRoute(request,env,orgId,principal) {
+  if(!env.DB)return json({error:"database_not_bound"},503);
+  if(!validOrg.test(orgId))return json({error:"not_found"},404);
+  const membership=await requireMembership(env.DB,orgId,principal.userId);
+  if(!membership)return json({error:"not_found"},404);
+  const canSeeAll=["owner","admin","manager","viewer"].includes(membership.role);
+  const canAdd=["owner","admin","manager","sales"].includes(membership.role);
+  if(request.method==="GET") {
+    const statement=canSeeAll
+      ?env.DB.prepare("SELECT id,name,stage,owner_user_id,created_at FROM crm_accounts WHERE organization_id=? ORDER BY created_at DESC LIMIT 100").bind(orgId)
+      :env.DB.prepare("SELECT id,name,stage,owner_user_id,created_at FROM crm_accounts WHERE organization_id=? AND owner_user_id=? ORDER BY created_at DESC LIMIT 100").bind(orgId,principal.userId);
+    const result=await statement.all();
+    return json({accounts:(result.results||[]).map(leadRow)});
+  }
+  if(request.method==="POST") {
+    if(!canAdd)return json({error:"forbidden"},403);
+    const type=request.headers.get("Content-Type")||"";
+    if(!type.toLowerCase().startsWith("application/json"))return json({error:"json_required"},415);
+    const length=Number(request.headers.get("Content-Length")||"0");
+    if(length>8192)return json({error:"request_too_large"},413);
+    let payload;try{const body=await request.text();if(body.length>8192)return json({error:"request_too_large"},413);payload=JSON.parse(body)}catch{return json({error:"invalid_json"},400)}
+    if(!payload||Array.isArray(payload)||typeof payload!=="object")return json({error:"invalid_payload"},400);
+    const name=typeof payload.name==="string"?payload.name.trim():"";
+    const stage=payload.stage===undefined?"lead":payload.stage;
+    if(!name||name.length>180||!validStages.has(stage))return json({error:"invalid_fields"},400);
+    const id=crypto.randomUUID(),auditId=crypto.randomUUID();
+    const time=new Date().toISOString();
+    await env.DB.batch([
+      env.DB.prepare("INSERT INTO crm_accounts(id,organization_id,name,stage,owner_user_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?)").bind(id,orgId,name,stage,principal.userId,time,time),
+      env.DB.prepare("INSERT INTO audit_events(id,organization_id,actor_user_id,event_type,target_type,target_id,created_at) VALUES (?,?,?,?,?,?,?)").bind(auditId,orgId,principal.userId,"crm.account.created","crm_account",id,time)
+    ]);
+    return json({id,name,stage,owner_user_id:principal.userId,created_at:time},201);
+  }
+  return json({error:"method_not_allowed"},405,{"Allow":"GET, POST"});
+}
+async function publicAds(env) {
+  if(!env?.DB)return {advertisements:[HOUSE_AD],fallback:true};
+  try {
+    const now=new Date().toISOString();
+    const r=await env.DB.prepare("SELECT id,advertiser_name,headline,subtitle,format,destination_url FROM ad_campaigns WHERE status='active' AND starts_at<=? AND ends_at>? ORDER BY created_at ASC LIMIT 5").bind(now,now).all();
+    const ads=(r.results||[]).map(v=>({...v,house_ad:false}));
+    return {advertisements:ads.length?ads:[HOUSE_AD],fallback:ads.length===0};
+  }catch(e){console.error("Public ads query failed",e instanceof Error?e.message:"unknown");return {advertisements:[HOUSE_AD],fallback:true}}
+}
 export default {
-  async fetch(request, env) {
-    const url = new URL(request.url);
-    if (request.method === "GET" && url.pathname === "/health") return json({ service:"asas-business-suite-api", status:"scaffold", production_ready:false });
-    if (request.method === "GET" && url.pathname === "/public/ads") {
-      if (!env?.DB) return json({ advertisements:[HOUSE_AD], fallback:true });
-      try {
-        const now = new Date().toISOString();
-        const {results} = await env.DB.prepare(
-          "SELECT id, advertiser_name, headline, subtitle, format, destination_url FROM ad_campaigns WHERE status = 'active' AND starts_at <= ? AND ends_at > ? ORDER BY created_at ASC LIMIT 5"
-        ).bind(now,now).all();
-        const advertisements = Array.isArray(results) && results.length ? results.map(x=>({
-          id:x.id, advertiser_name:x.advertiser_name, headline:x.headline,
-          subtitle:x.subtitle, format:x.format, destination_url:x.destination_url,
-          house_ad:false
-        })) : [HOUSE_AD];
-        return json({ advertisements, fallback:advertisements[0].house_ad === true });
-      } catch(err) {
-        console.error("ASAS public ad query failed", err instanceof Error ? err.message : "unknown");
-        return json({ advertisements:[HOUSE_AD], fallback:true });
-      }
+  async fetch(request,env) {
+    const path=new URL(request.url).pathname;
+    if(request.method==="GET"&&path==="/health")return json({service:"asas-business-suite-api",status:"staging",production_ready:false});
+    if(request.method==="OPTIONS"&&path==="/public/ads")return new Response(null,{status:204,headers:{...cors(request,env),"Access-Control-Allow-Methods":"GET, OPTIONS","Access-Control-Allow-Headers":"Content-Type","Cache-Control":"no-store"}});
+    if(request.method==="GET"&&path==="/public/ads")return json(await publicAds(env),200,cors(request,env));
+    if(path.startsWith("/api/")) {
+      const auth=await accessPrincipal(request,env);
+      if(auth.error)return auth.error;
+      const match=path.match(/^\/api\/organizations\/([a-zA-Z0-9_-]{1,64})\/crm\/accounts$/);
+      if(match)return crmRoute(request,env,match[1],auth.principal);
+      return json({error:"not_found"},404);
     }
-    if (url.pathname.startsWith("/api/")) return json({ error:"protected_api_not_available", message:"Authentication and tenant authorization are not yet deployed." },503);
-    return json({ error:"not_found" },404);
+    return json({error:"not_found"},404);
   }
 };
