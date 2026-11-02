@@ -3,6 +3,7 @@
 Verified initial GitHub repository: Public, name ahmedwaleed07/360-Business-Suite-.
 Public demo frontend files added to main: index.html, assets/site.css, assets/site.js.
 Public Pages deployment instructions added in docs/PAGES-DEPLOYMENT.md.
+GitHub repository API now reports has_pages=true (2 Nov 2026); this confirms the Pages feature is enabled, but does not prove that the public site URL responds successfully.
 The source code and mock data are intentionally public and non-sensitive.
 This is not a commercial or secure production deployment.
 
