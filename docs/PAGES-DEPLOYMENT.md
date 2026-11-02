@@ -1,14 +1,20 @@
-# GitHub Pages deployment guide
+# GitHub Pages public preview
 
-Repository: ahmedwaleed07/360-Business-Suite- (Public)
+Repository: `ahmedwaleed07/360-Business-Suite-` (Public)
 
-In repository Settings > Pages > Build and deployment, select "Deploy from a branch", branch "main" and folder "/ (root)" and save.
+GitHub Pages was enabled on 2 November 2026, according to the repository API. The preview is deployed from `main` and `/(root)`; its expected URL is:
 
-After successful Pages deployment, the expected address is:
 https://ahmedwaleed07.github.io/360-Business-Suite-/
 
-This is a guessed route based on GitHub Pages conventions, not proof that Pages has been enabled.
+**This site is a static demonstration only.** GitHub Pages is not the production host for a paid SaaS or sensitive business transactions.
 
-IMPORTANT: GitHub Pages is for static demos, not for hosting a paid SaaS application, nor sensitive transactions. The commercial system should be deployed to Cloudflare Pages and Workers (Cloudflare supports private GitHub repositories), while authentication and database access remain server-side.
+## Commercial hosting (revised)
 
-Current UI is a standalone local-memory preview with fictional sample data. No real Supabase, ERPNext, billing, tenant isolation or authentication is connected.
+- Cloudflare Workers Static Assets for the React commercial frontend.
+- Cloudflare Workers for application APIs and authentication/authorization.
+- Cloudflare D1 for ASAS Core/CRM relational records and R2 for documents/media.
+- ERPNext as separately hosted Frappe/MariaDB, integrated over secure APIs.
+
+See [the Cloudflare architecture plan](CLOUDFLARE-ARCHITECTURE.md). There is **no Supabase dependency** in the new plan.
+
+The current GitHub Pages preview still uses fictional in-memory data; it is not connected to a live D1 database, API, ERPNext or billing provider.
