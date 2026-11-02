@@ -1,0 +1,13 @@
+{
+  "name": "asas-360-business-suite-public-preview",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Public static demo only; no live customer data",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
