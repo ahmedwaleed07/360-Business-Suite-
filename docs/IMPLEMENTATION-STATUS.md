@@ -2,13 +2,13 @@
 **Recorded:** 2 November 2026 (Baghdad time)
 
 ## Completed and verified
-- [x] GitHub repository \`ahmedwaleed07/360-Business-Suite-\` remains Public.
+- [x] GitHub repository `ahmedwaleed07/360-Business-Suite-` remains Public.
 - [x] GitHub Pages preview and automated CI checks deployed/passed in GitHub.
-- [x] Separate Cloudflare D1 database \`asas-business-suite-staging\` created in the EEUR location hint.
+- [x] Separate Cloudflare D1 database `asas-business-suite-staging` created in the EEUR location hint.
 - [x] ASAS-only initial D1 schema applied: organizations, memberships, CRM accounts/contacts, audit events, ad campaigns.
 - [x] Live D1 integrity test: a contact in one organization cannot reference another organization's CRM account.
 - [x] Live D1 inventory test: five active paid campaigns accepted; sixth rejected. All synthetic records removed after test.
-- [x] Cloudflare Worker \`asas-business-suite-staging\` uploaded and deployed at 100% with D1 binding.
+- [x] Cloudflare Worker `asas-business-suite-staging` uploaded and deployed at 100% with D1 binding.
 - [x] Workers.dev subdomain enabled; direct HTTP from the assistant's environment could not be independently tested.
 - [x] Public ad endpoint has an animated ASAS house-ad fallback when paid campaigns are absent.
 - [x] Cloudflare Access RS256/JWKS verification logic and tenant-scoped CRM read/create code added.
