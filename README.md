@@ -7,8 +7,8 @@ Unified CRM, ERP and operational platform by **ASAS 360°**. This repository int
 **Cloudflare-first. No Supabase dependency for ASAS Business Suite.**
 
 - **Public GitHub Pages UI:** CRM, stock, permissions and workflows remain fictional demos. Public advertising inventory is fetched read-only from the Cloudflare staging API when available; the animated ASAS house advertisement always remains as fallback.
-- **Cloudflare D1:** A separate staging database named \`asas-business-suite-staging\` was created and the initial schema applied. Existing MIRA, MAIC and GO Barbie resources were not modified. Tenant composite foreign-key integrity and the maximum-five-active-paid-ads trigger were tested with temporary data, then cleaned up.
-- **Cloudflare Worker:** \`asas-business-suite-staging\` was deployed with a D1 binding and an origin allowlist for the read-only ad endpoint. It serves \`/health\` and \`/public/ads\`, while protected CRM routes **fail closed** until Cloudflare Access is configured.
+- **Cloudflare D1:** A separate staging database named `asas-business-suite-staging` was created and the initial schema applied. Existing MIRA, MAIC and GO Barbie resources were not modified. Tenant composite foreign-key integrity and the maximum-five-active-paid-ads trigger were tested with temporary data, then cleaned up.
+- **Cloudflare Worker:** `asas-business-suite-staging` was deployed with a D1 binding and an origin allowlist for the read-only ad endpoint. It serves `/health` and `/public/ads`, while protected CRM routes **fail closed** until Cloudflare Access is configured.
 - **API code:** Verifies RS256 Cloudflare Access JWT signatures and issuer/audience/expiry, then checks organizational memberships in D1 before a CRM list or create request. Authorized creations are audit logged. The customer-login and company onboarding product is *not* implemented.
 - **GitHub Actions:** native Node test suite validates Cloudflare Access token security, tenant-scoping and static demo. This does not substitute for an end-to-end production security review.
 
