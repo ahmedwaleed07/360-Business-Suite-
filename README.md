@@ -1,38 +1,41 @@
 # ASAS 360° Business Suite
 
-ASAS 360°'s unified CRM + ERP + company management platform. This repository is deliberately **Public** to support a GitHub Pages product demonstration.
+Unified CRM, ERP and operational platform by **ASAS 360°**. This repository intentionally remains **Public** for the GitHub Pages demonstration.
 
-## Hosting decision — 2026-11-02
+## Current status — 2 November 2026
 
-**Cloudflare-first; no Supabase in the new product architecture.**
+**Cloudflare-first. No Supabase dependency for ASAS Business Suite.**
 
-- Static public preview: `index.html`, `assets/site.css`, `assets/site.js` on GitHub Pages, using fictional data only.
-- Commercial frontend: Cloudflare Workers Static Assets / React.
-- APIs and authorization enforcement: Cloudflare Workers (Hono planned).
-- Business database: Cloudflare D1 (SQLite), with strict organization scoping in every API query. Note that **D1 does not provide PostgreSQL Row Level Security**.
-- Documents and animated advertisement media: Cloudflare R2.
-- Background processing: Cloudflare Queues and Cron as needed; Durable Objects for concurrency-sensitive workflows where justified.
-- Login/identity: a dedicated authentication layer for Workers/D1 (Better Auth is being assessed). Cloudflare Access is an optional *internal admin* gate, not a complete customer identity and permissions system.
-- ERP financial/accounting engine: separately hosted ERPNext/Frappe and MariaDB, connected only via authenticated server-to-server APIs. This is **not** a Cloudflare D1 replacement for ERPNext's own DB.
+- **Public GitHub Pages UI:** CRM, stock, permissions and workflows remain fictional demos. Public advertising inventory is fetched read-only from the Cloudflare staging API when available; the animated ASAS house advertisement always remains as fallback.
+- **Cloudflare D1:** A separate staging database named \`asas-business-suite-staging\` was created and the initial schema applied. Existing MIRA, MAIC and GO Barbie resources were not modified. Tenant composite foreign-key integrity and the maximum-five-active-paid-ads trigger were tested with temporary data, then cleaned up.
+- **Cloudflare Worker:** \`asas-business-suite-staging\` was deployed with a D1 binding and an origin allowlist for the read-only ad endpoint. It serves \`/health\` and \`/public/ads\`, while protected CRM routes **fail closed** until Cloudflare Access is configured.
+- **API code:** Verifies RS256 Cloudflare Access JWT signatures and issuer/audience/expiry, then checks organizational memberships in D1 before a CRM list or create request. Authorized creations are audit logged. The customer-login and company onboarding product is *not* implemented.
+- **GitHub Actions:** native Node test suite validates Cloudflare Access token security, tenant-scoping and static demo. This does not substitute for an end-to-end production security review.
 
-Review [Cloudflare architecture](docs/CLOUDFLARE-ARCHITECTURE.md) for scaling, security and deployment decisions.
+### Links
 
-## Public GitHub Pages demo
+- [Public UI preview](https://ahmedwaleed07.github.io/360-Business-Suite-/)
+- [Worker staging health route](https://asas-business-suite-staging.eng-ahmed-waleed.workers.dev/health)
+- [Worker public advertisements](https://asas-business-suite-staging.eng-ahmed-waleed.workers.dev/public/ads)
 
-After Pages is enabled for `main` / `/(root)`, the expected URL is https://ahmedwaleed07.github.io/360-Business-Suite- .
+Cloudflare API confirms Worker deployment and subdomain enablement. Direct HTTP reachability from the assistant's environment could **not** be independently verified.
 
-The demonstration illustrates CRM, stock, approvals, roles, and an animated ads area. Up to five paid advertisements can rotate; when none are active, the ASAS 360° house advertisement is always shown. **Role switching and data isolation in the demo are not actual server-side authorization.**
+## Technical architecture
 
-The public demo must not process real customers or commercial transactions. GitHub Pages is not the production SaaS host.
+| Layer | Selected system |
+|---|---|
+| Demo UI | GitHub Pages (static, synthetic data) |
+| Commercial frontend | React/TypeScript → Cloudflare Workers Static Assets |
+| API | Cloudflare Workers (Hono planned) |
+| ASAS Core / CRM | Cloudflare D1 (SQLite), server-enforced tenant/role scoping |
+| Uploaded media/files | Cloudflare R2 (planned, not created) |
+| Messages/jobs | Cloudflare Queues (planned) |
+| Pilot internal identity gate | Cloudflare Access JWT verification (requires policy configuration) |
+| Commercial customer login | Dedicated SaaS auth stack, not implemented yet |
+| ERP accounting | Separately hosted ERPNext/Frappe + MariaDB (not connected) |
 
-## Cloudflare foundation
+**Security:** D1 does not have PostgreSQL RLS. Membership checks and organization filters MUST be enforced in every API query. The public demo's role selector is cosmetic only. Do not put secret keys, actual customer data, payroll records or private documents in this Public repository.
 
-`cloudflare/` contains a safe, un-deployed Worker scaffold, an example Wrangler configuration and a starter D1 schema. The Worker returns a public house ad by default, and **rejects all protected API requests until authentication and authorization are implemented**.
+**Product readiness:** staging foundation — **not a commercial SaaS launch**. No subscribers, invoices, payments or production admin accounts were created.
 
-No real D1 database, R2 bucket, Worker deployment, or ERPNext integration is claimed.
-
-## Security
-
-This is a publicly readable repository. Do not commit credentials, customer records, invoices, proprietary secrets, or internal business data. The existing MIRA environment must remain untouched.
-
-Development status: prototype + architecture and scaffold; **not commercial production-ready**.
+See [implementation status](docs/IMPLEMENTATION-STATUS.md), [Cloudflare architecture](docs/CLOUDFLARE-ARCHITECTURE.md) and [security notes](docs/SECURITY-NOTES.md).
