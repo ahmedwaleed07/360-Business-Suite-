@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASAS 360° — Projects & Tasks</title>
+<meta name="theme-color" content="#111922">
+<link rel="stylesheet" href="./assets/projects.css">
+<script src="./assets/projects.js" defer></script>
+</head>
+<body>
+<div class="workspace">
+  <aside class="sidebar" aria-label="التنقل">
+    <a href="./index.html" class="brand"><span class="brand-orbit" aria-hidden="true">◉</span><span>ASAS <strong>360°</strong><small>BUSINESS SUITE</small></span></a>
+    <div class="side-heading">WORK MANAGEMENT</div>
+    <div class="current-link">▦ <span>المشاريع والمهام</span></div>
+    <a href="./index.html" class="back-link">← العودة للوحة التحكم</a>
+    <div class="side-bottom"><span class="dot"></span> Interactive Preview <small>بيانات افتراضية — مو نظام إنتاجي</small></div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <span class="eyebrow">ASAS 360° / PROJECTS</span>
+        <h1>المشاريع والمهام <span class="version">V6 CONCEPT</span></h1>
+      </div>
+      <div class="top-actions">
+        <label class="visually-hidden" for="companySelect">الشركة</label>
+        <select id="companySelect"><option value="atlas">شركة أطلس للتجارة</option><option value="vision">شركة الرؤية للخدمات</option></select>
+        <button class="primary" id="createSection">+ قسم جديد</button>
+      </div>
+    </header>
+    <div class="notice"><b>DEMO</b> تجربة استخدام مستقلة مستوحاة من سهولة إدارة العمل، وليست تقليداً لتصميم Asana. المتعاونون والصلاحيات هنا تجريبيون؛ لا يوجد تخزين سحابي أو تسجيل دخول حقيقي.</div>
+    <section class="project-head" aria-label="خيارات المشروع">
+      <div>
+        <span class="eyebrow">PROJECT WORKSPACE</span>
+        <h2>لوحة تنفيذ الأعمال</h2>
+        <p>الأقسام والمهام والمتعاونون بنفس المكان، بدون كثرة صفحات أو نوافذ.</p>
+      </div>
+      <div class="project-actions">
+        <label class="visually-hidden" for="filterTasks">فلترة المهام</label>
+        <select id="filterTasks"><option value="all">كل المهام</option><option value="mine">مهامي</option><option value="open">غير المكتملة</option><option value="done">المكتملة</option></select>
+        <div class="view-switch" aria-label="طريقة العرض">
+          <button id="boardView" class="view-button chosen" aria-pressed="true">لوحة</button>
+          <button id="listView" class="view-button" aria-pressed="false">قائمة</button>
+        </div>
+      </div>
+    </section>
+    <div class="stats" id="summary" aria-label="ملخص العمل"></div>
+    <div class="hints">
+      <span><span class="small-dot"></span> اسحب المهمة بين الأقسام على الكمبيوتر، أو استعمل قائمة ⋯ بالموبايل</span>
+      <span><kbd>N</kbd> إضافة مهمة بسرعة</span>
+    </div>
+    <div id="board" class="board" aria-label="أقسام المشروع"></div>
+    <p class="foot-note">تغييرات هذه المعاينة تبقى مؤقتاً بالصفحة وتختفي عند إعادة تحميلها. النسخة الإنتاجية ستستخدم Cloudflare D1 وصلاحيات خادم حقيقية، مو مجرد إخفاء الأزرار.</p>
+  </main>
+</div>
+<div id="overlay" class="overlay" hidden></div>
+<aside id="drawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" hidden>
+  <header class="drawer-head"><h2 id="drawerTitle">تفاصيل المهمة</h2><button type="button" id="closeDrawer" class="icon-button" aria-label="إغلاق">×</button></header>
+  <form id="taskForm">
+    <label>اسم المهمة <input id="taskTitle" name="title" maxlength="150" required autocomplete="off" placeholder="اكتب عنوان المهمة"></label>
+    <label>الوصف <textarea id="taskDescription" name="description" rows="4" maxlength="2000" placeholder="شنو المطلوب بالضبط؟"></textarea></label>
+    <div class="form-grid">
+      <label>المسؤول <select id="taskAssignee" name="assignee"></select></label>
+      <label>الأولوية <select name="priority" id="taskPriority"><option value="normal">اعتيادية</option><option value="high">عالية</option><option value="urgent">عاجلة</option></select></label>
+      <label>القسم <select id="taskSection" name="sectionId"></select></label>
+      <label>تاريخ الاستحقاق <input name="dueDate" id="taskDue" type="date"></label>
+    </div>
+    <label class="check-line"><input id="taskDone" type="checkbox"> المهمة مكتملة</label>
+    <div class="drawer-actions"><button class="primary" type="submit">حفظ التغييرات</button><button type="button" class="secondary" id="cancelTask">إلغاء</button></div>
+  </form>
+</aside>
+<aside id="sectionDrawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="sectionDrawerTitle" hidden>
+  <header class="drawer-head"><h2 id="sectionDrawerTitle">إعدادات القسم</h2><button type="button" class="icon-button" id="closeSectionDrawer" aria-label="إغلاق">×</button></header>
+  <form id="sectionForm">
+    <label>اسم القسم<input id="sectionName" name="name" maxlength="70" required placeholder="اسم القسم"></label>
+    <p class="subheading">المتعاونون بهذا القسم</p>
+    <p class="help">اختار من يشارك القسم. الدور هنا توضيحي، والأمان الفعلي ينفرض من الخادم لاحقاً.</p>
+    <div id="memberChoices" class="member-choices"></div>
+    <div class="drawer-actions"><button class="primary" type="submit">حفظ القسم</button><button class="secondary" type="button" id="cancelSection">إلغاء</button></div>
+  </form>
+</aside>
+<div id="menu" class="context-menu" role="menu" hidden></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body></html>
