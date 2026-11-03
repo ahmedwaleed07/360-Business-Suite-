@@ -1,0 +1,103 @@
+/* 360° Business Suite — official light interface and intro foundation.
+   Applied to both the public Dashboard and Projects demonstration. */
+:root{color-scheme:light;--bg:#fbfaff;--side:#fff;--card:#fff;--line:#e7e3ee;--ink:#1d1d2b;--text:#1d1d2b;--muted:#6c6b7e;--accent:#792bd1;--stroke:#e7e3ee;--sidebar:#fff;--panel:#fff;--blue:#209fdf;--cyan:#24b9e9}
+body{background:linear-gradient(135deg,#fff 0%,#fcfaff 51%,#f8fbff 100%)!important;color:#1c1b29!important}
+.sidebar{background:#fff!important;border-color:#e9e3f0!important;box-shadow:5px 0 20px #48227b06!important}
+.brand{color:#201d2c!important;gap:10px;font-size:18px!important;line-height:1.13}
+.brand em,.brand strong{font-style:normal;color:#7e2bd6!important}
+.brand small{color:#8a8995!important}
+.brand-symbol{display:block;object-fit:contain;width:81px;min-width:81px;height:48px}
+nav button,.nav-link,.back-link{color:#64677a!important}
+nav button.selected,nav button:hover,.nav-link.active,.current-link{background:#f1eafa!important;border-color:#e5d6f9!important;color:#7022bb!important}
+.nav-project-link{background:#f5effd!important;border:1px solid #ead8fc!important;color:#792bd1!important}
+.new-feature{color:#742dc0!important}
+.sideheading,.side-heading,.overline,.eyebrow{color:#858399!important}
+.asidefoot,.side-bottom{color:#6b7184!important;border-color:#ebe6f1!important}
+.content,.main{background:transparent}
+.top,.topbar{border-bottom:1px solid #efedf3;padding-bottom:16px}
+.top h1,.topbar h1,.lead h2,.project-head h2{color:#22202d}
+h2,h3{color:#252135}
+p,.help,.foot-note{color:#747587}
+.kpi,.card,.stat,.section{background:#fff!important;border-color:#e9e4f0!important;box-shadow:0 8px 26px #37235b0a;border-radius:15px}
+.task-card{background:#fff!important;border-color:#e7e1ef!important;color:#242030;box-shadow:0 6px 14px #321a6606}
+.task-title,.section-head h3{color:#232132}
+input,select,textarea{color:#272138!important;background:#fff!important;border:1px solid #d9d6e4!important}
+input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid #a64eff!important;outline-offset:2px}
+button{transition:background-color .16s ease,border-color .16s ease}
+.mainbtn,.primary,.suite-entry-btn{background:linear-gradient(105deg,#7826c8,#aa36dc)!important;color:#fff!important;border:0!important;box-shadow:0 5px 14px #792bd12b}
+.mainbtn:hover,.primary:hover,.suite-entry-btn:hover{filter:brightness(1.08)}
+.secondary,.view-switch,.view-button{background:#f7f5fc!important;border-color:#e3dded!important;color:#5c5770!important}
+.view-button.chosen{background:#e9dafa!important;color:#702bb7!important}
+.notice,.demo-warning{background:#f8f2ff!important;border-color:#e9d4ff!important;color:#625275!important}
+.notice b,.demo-warning b{color:#7730c9!important}
+.version,.chip,.tag{background:#f4edfd!important;color:#702eb1!important;border-color:#e6d7f7!important}
+.adbanner{background:radial-gradient(ellipse at 80% 30%,#eafaff 0%,#f0e1ff 36%,#fdfaff 83%)!important;border:1px solid #e5cffd!important}
+.adbanner::before{border-color:#8f47e455!important}
+.adbanner::after{background:radial-gradient(circle,#ac48ff35,transparent 70%)!important}
+.adcopy h2{color:#6124ae!important}
+.adcopy p{color:#655779!important}
+.adcopy .overline{color:#7e38c4!important}
+.adcopy a{background:#6f2bc8!important;color:white!important}
+.adbar{color:#80738a!important}
+.adbar button{background:#fff!important;color:#692ac4!important;border-color:#e1d7f0!important}
+.line,th,td,footer{border-color:#eee9f3!important}
+th{color:#858291!important}
+footer{color:#8a8494!important}
+footer a{color:#7a36c2!important}
+.pill{background:#eee6fd!important;color:#782cb8!important}
+.pill.high{background:#fff1d6!important;color:#99600b!important}
+.pill.urgent{background:#ffe3e3!important;color:#a73039!important}
+.small-dot,.dot{background:#2eae89!important}
+.section-owners,.muted{color:#7c7c8b!important}
+.quick-add{border-color:#b99fdc!important;color:#773bc7!important}
+.quick-add:hover{background:#f6effd!important}
+.role-demo,.check-row,.member-item{background:#f8f4fd!important;border-color:#e7daef!important;color:#45385d!important}
+.drawer{background:white!important;border-color:#e5d9ed!important}
+.drawer-head{border-color:#eae4f0!important}
+.context-menu{background:white!important;border-color:#e3dcec!important;box-shadow:0 16px 40px #2f215028!important}
+.context-menu button{color:#31283b!important}
+.context-menu button:hover{background:#f4ecfe!important}
+.toast{background:#e4f8ef!important}
+body.suite-demo-active #suiteLogout{display:inline-flex}
+#suiteLogout{display:none;align-items:center;gap:6px;border:1px solid #e9dcf5;background:#fff;color:#792dc4;padding:8px 11px;border-radius:9px;font-size:12px}
+html:not(.suite-ready) .shell,html:not(.suite-ready) .workspace{visibility:hidden}
+.suite-gate{position:fixed;inset:0;z-index:3000;display:grid;background:#fff;place-items:center;color:#242033}
+.suite-gate[hidden],.suite-intro[hidden],.suite-entry[hidden]{display:none!important}
+.suite-intro,.suite-entry{position:absolute;inset:0;display:grid;place-items:center;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#fff 30%,#faf5ff 81%,#f4fbff 100%)}
+.suite-intro-inner{width:min(92vw,980px);display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;transform:translateY(-6%)}
+.suite-logo-stage{position:relative;width:min(80vw,730px);aspect-ratio:1104/484}
+.suite-logo-stage svg,.suite-logo-stage img{position:absolute;inset:0;width:100%;height:100%}
+.suite-trace{opacity:0}
+.suite-trace-path{stroke-dasharray:2000;stroke-dashoffset:2000}
+.suite-complete-mark{opacity:0;transform:translateY(6px) scale(.98)}
+.suite-brand-name{font-size:clamp(18px,3.7vw,36px);font-weight:800;letter-spacing:.1em;direction:ltr;color:#272538;opacity:0;transform:translateY(10px)}
+.suite-brand-name span{color:#9236d7}
+.suite-powered{min-height:72px;display:flex;flex-direction:column;gap:4px;align-items:center;opacity:0;transform:translateY(12px)}
+.suite-powered span,.suite-entry-footer span{font-size:12px;letter-spacing:.13em;color:#8b8897;font-weight:600}
+.suite-powered img{width:155px;max-height:63px;object-fit:contain}
+.suite-skip{position:absolute;z-index:2;top:max(22px,env(safe-area-inset-top));left:clamp(15px,4vw,45px);background:#fff;border:1px solid #e9d9f5;color:#7527c1;border-radius:99px;padding:10px 18px;font-size:13px;box-shadow:0 7px 23px #7426ae14}
+.suite-progress{position:absolute;bottom:0;left:0;height:4px;width:100%;background:#f0e8fb}
+.suite-progress span{height:100%;display:block;width:0;background:linear-gradient(90deg,#7532c9,#a93deb,#28bae9)}
+.suite-intro.play .suite-trace{animation:suiteTraceFade 6s ease-in-out both}
+.suite-intro.play .suite-trace-path{animation:suiteTraceDraw 6s cubic-bezier(.38,.05,.2,1) both}
+.suite-intro.play .suite-complete-mark{animation:suiteLogoReveal 6s ease both}
+.suite-intro.play .suite-brand-name{animation:suiteNameReveal 6s ease both}
+.suite-intro.play .suite-powered{animation:suitePoweredReveal 6s ease both}
+.suite-intro.play .suite-progress span{animation:suiteTimer 6s linear both}
+@keyframes suiteTraceDraw{0%,4%{stroke-dashoffset:2000}39%,100%{stroke-dashoffset:0}}
+@keyframes suiteTraceFade{0%,32%{opacity:1}49%,100%{opacity:0}}
+@keyframes suiteLogoReveal{0%,34%{opacity:0;transform:translateY(6px) scale(.98)}50%,100%{opacity:1;transform:none}}
+@keyframes suiteNameReveal{0%,51%{opacity:0;transform:translateY(10px)}64%,100%{opacity:1;transform:none}}
+@keyframes suitePoweredReveal{0%,68%{opacity:0;transform:translateY(12px)}81%,100%{opacity:1;transform:none}}
+@keyframes suiteTimer{to{width:100%}}
+.suite-entry-card{width:min(92vw,420px);padding:32px 29px 25px;border-radius:25px;background:white;border:1px solid #efe5f5;box-shadow:0 22px 75px #6b399418;text-align:center}
+.suite-entry-logo{width:min(100%,270px);height:120px;object-fit:contain}
+.suite-entry-card h1{margin:0;font-size:25px;color:#242030;direction:ltr}
+.suite-entry-card>p{color:#7b7384;margin:5px 0}
+.suite-entry-card .suite-entry-notice{font-size:12px;line-height:1.7;background:#f8f2ff;border:1px solid #eadbf6;padding:13px;border-radius:10px;margin:19px 0;color:#655472}
+.suite-entry-btn{padding:12px 25px;border-radius:11px;width:100%;font-weight:700}
+.suite-entry-replay{background:none;border:0;color:#7f39c2;margin:12px auto 7px;font-size:12px;padding:8px}
+.suite-entry-footer{margin-top:12px;border-top:1px solid #f0eaf5;padding-top:13px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.suite-entry-footer img{height:48px;width:auto;max-width:125px;object-fit:contain}
+@media(max-width:580px){.suite-logo-stage{width:94vw}.suite-intro-inner{gap:6px;transform:translateY(-2%)}.suite-brand-name{font-size:18px;letter-spacing:.05em}.suite-powered img{width:120px}.brand-symbol{width:63px;min-width:63px;height:36px}}
+@media(prefers-reduced-motion:reduce){.suite-intro.play *{animation:none!important}.suite-complete-mark,.suite-brand-name,.suite-powered{opacity:1!important;transform:none!important}}

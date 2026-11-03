@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1104 484" role="img" aria-label="360° Infinity logo">
+<defs>
+  <linearGradient id="ink" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#242538"/><stop offset=".45" stop-color="#383647"/><stop offset="1" stop-color="#181827"/></linearGradient>
+  <linearGradient id="ribbon" x1=".12" y1=".1" x2=".9" y2=".9"><stop stop-color="#ae2af2"/><stop offset=".36" stop-color="#ca40fc"/><stop offset=".65" stop-color="#4733d3"/><stop offset=".82" stop-color="#28c5f4"/><stop offset="1" stop-color="#9222e8"/></linearGradient>
+  <linearGradient id="degree" x1="0" y1="0" x2=".9" y2="1"><stop stop-color="#d946ff"/><stop offset="1" stop-color="#4d14b2"/></linearGradient>
+</defs>
+<g fill="url(#ink)" font-family="Arial Black, Arial, sans-serif" font-style="italic" font-weight="900">
+<text x="14" y="372" font-size="390" letter-spacing="-37">36</text></g>
+<path d="M390 337 C484 455 570 365 644 255 C710 154 760 107 855 107 C974 107 1064 243 982 341 C904 439 806 396 733 305" fill="none" stroke="#4226a7" stroke-width="120" stroke-linecap="round" opacity=".88"/>
+<path d="M390 332 C488 448 570 357 644 248 C715 143 767 101 855 102 C980 101 1061 231 979 331 C902 426 803 391 728 298" fill="none" stroke="url(#ribbon)" stroke-width="110" stroke-linecap="round"/>
+<path d="M604 323 C683 256 729 138 838 114" fill="none" stroke="#ffffff" stroke-opacity=".19" stroke-width="10" stroke-linecap="round"/>
+<circle cx="1043" cy="60" r="36" fill="none" stroke="url(#degree)" stroke-width="25"/>
+</svg>

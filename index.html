@@ -1,15 +1,48 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#121922">
-<title>ASAS 360° Business Suite — Preview</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#ffffff">
+<title>360° Business Suite — Interactive Preview</title>
 <link rel="stylesheet" href="assets/site.css">
 <script src="assets/site.js" defer></script>
+<link rel="stylesheet" href="assets/brand-theme.css">
+<script type="module" src="./assets/brand-gate.js"></script>
 </head>
 <body>
+<div id="suiteGate" class="suite-gate" aria-label="شاشة الدخول إلى 360° Business Suite">
+  <section id="suiteIntro" class="suite-intro" aria-label="شعار افتتاحي مدته ست ثوانٍ">
+    <button type="button" id="suiteSkip" class="suite-skip">تخطي المقدمة <span aria-hidden="true">←</span></button>
+    <div class="suite-intro-inner">
+      <div class="suite-logo-stage">
+        <svg class="suite-trace" viewBox="0 0 1104 484" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs><linearGradient id="suiteStroke" x1="0" x2="1"><stop stop-color="#aa22e5"/><stop offset=".55" stop-color="#a52ae9"/><stop offset="1" stop-color="#20c4ee"/></linearGradient></defs>
+          <path class="suite-trace-path" d="M390 332 C488 448 570 357 644 248 C715 143 767 101 855 102 C980 101 1061 231 979 331 C902 426 803 391 728 298" fill="none" stroke="url(#suiteStroke)" stroke-width="105" stroke-linecap="round"/>
+        </svg>
+        <img class="suite-complete-mark" src="./assets/branding/360-infinity.svg" alt="شعار 360 Infinity" />
+      </div>
+      <div class="suite-brand-name"><strong>360<span>°</span></strong> BUSINESS SUITE</div>
+      <div class="suite-powered">
+        <span>Powered by</span>
+        <img src="./assets/branding/asas360-original-logo.png" alt="ASAS 360°" />
+      </div>
+    </div>
+    <div class="suite-progress" aria-hidden="true"><span></span></div>
+  </section>
+  <section id="suiteEntry" class="suite-entry" hidden aria-label="دخول نسخة المعاينة">
+    <div class="suite-entry-card">
+      <img class="suite-entry-logo" src="./assets/branding/360-infinity.svg" alt="360° Business Suite" />
+      <h1>360° Business Suite</h1>
+      <p>إدارة أعمالك بواجهة واحدة</p>
+      <p class="suite-entry-notice">هذه معاينة عامة ببيانات افتراضية. تسجيل الدخول الحقيقي للحسابات ما زال قيد التطوير.</p>
+      <button type="button" id="suiteEnter" class="suite-entry-btn">دخول النسخة التجريبية <span aria-hidden="true">←</span></button>
+      <button type="button" id="suiteReplay" class="suite-entry-replay">إعادة مشاهدة المقدمة</button>
+      <div class="suite-entry-footer"><span>Powered by</span><img src="./assets/branding/asas360-original-logo.png" alt="ASAS 360°" /></div>
+    </div>
+  </section>
+</div>
 <div class="shell">
 <aside class="sidebar">
- <div class="brand"><span class="orb">◉</span><span>ASAS <em>360°</em><small>BUSINESS SUITE</small></span></div>
+ <a class="brand" href="./index.html"><img src="./assets/branding/360-infinity.svg" class="brand-symbol" alt="شعار 360°" /><span>360° <small>BUSINESS SUITE</small></span></a>
  <div class="sideheading">WORKSPACE</div>
  <nav id="navigation" aria-label="القائمة">
  <button data-view="home" class="selected">▦ &nbsp; لوحة التحكم</button>
@@ -20,6 +53,7 @@
  <button data-view="permissions">♙ &nbsp; الصلاحيات</button>
  <button data-view="ads">◈ &nbsp; ASAS Ads</button>
  </nav>
+ <button id="suiteLogout" type="button">تسجيل الخروج من المعاينة</button>
  <p class="asidefoot">● Public Preview<br><small>Demo only • Not a production system</small></p>
 </aside>
 <main class="content">
@@ -29,7 +63,7 @@
 </header>
 <div class="demo-warning"><b>DEMO</b> هذه نسخة للمعاينة ببيانات افتراضية. تغيير الدور أو الشركة هنا لا يمثّل حماية حقيقية، ولا توجد قاعدة بيانات أو جلسات مستخدمين.</div>
 <section id="home" class="view current">
- <div class="lead"><div><span class="overline">UNIFIED BUSINESS OPERATIONS</span><h2>كل أعمال شركتك، بمكان واحد.</h2><p>إدارة العملاء، المبيعات، المخازن والصلاحيات ضمن تجربة أعمال موحّدة.</p></div><span class="version">V5 • PUBLIC PREVIEW</span></div>
+ <div class="lead"><div><span class="overline">UNIFIED BUSINESS OPERATIONS</span><h2>كل أعمال شركتك، بمكان واحد.</h2><p>إدارة العملاء، المبيعات، المخازن والصلاحيات ضمن تجربة أعمال موحّدة.</p></div><span class="version">BRAND REFRESH • PREVIEW</span></div>
  <div id="kpis" class="kpis"></div>
  <div class="headrow"><div><h3>مساحة شركائنا الإعلانية</h3><p>إعلان متحرك دائم، مع إعلان ASAS احتياطي عند عدم وجود معلنين</p></div><span class="chip">ASAS Ads</span></div>
  <div id="adBanner" class="adbanner" aria-label="الإعلان الحالي"></div>
