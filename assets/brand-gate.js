@@ -8,7 +8,7 @@ const logout=document.getElementById("suiteLogout");
 const replay=document.getElementById("suiteReplay");
 let introTimer=null;
 const root=document.documentElement;
-const storage=window.localStorage;
+let storage=null;try{storage=window.localStorage}catch{/* private browsing / disabled storage */}
 const prefersReduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 function showWorkspace(){
   clearTimeout(introTimer);
