@@ -7,6 +7,8 @@ body{background:linear-gradient(135deg,#fff 0%,#fcfaff 51%,#f8fbff 100%)!importa
 .brand em,.brand strong{font-style:normal;color:#7e2bd6!important}
 .brand small{color:#8a8995!important}
 .brand-symbol{display:block;object-fit:contain;width:81px;min-width:81px;height:48px}
+.brand .brand-wordmark{display:block;font-size:14px;font-weight:800;letter-spacing:.11em;white-space:nowrap;color:#242030;direction:ltr;text-align:left}
+
 nav button,.nav-link,.back-link{color:#64677a!important}
 nav button.selected,nav button:hover,.nav-link.active,.current-link{background:#f1eafa!important;border-color:#e5d6f9!important;color:#7022bb!important}
 .nav-project-link{background:#f5effd!important;border:1px solid #ead8fc!important;color:#792bd1!important}
