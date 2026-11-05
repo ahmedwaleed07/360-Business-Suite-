@@ -3,11 +3,11 @@
 :root{color-scheme:light;--bg:#fbfaff;--side:#fff;--card:#fff;--line:#e7e3ee;--ink:#1d1d2b;--text:#1d1d2b;--muted:#6c6b7e;--accent:#792bd1;--stroke:#e7e3ee;--sidebar:#fff;--panel:#fff;--blue:#209fdf;--cyan:#24b9e9}
 body{background:linear-gradient(135deg,#fff 0%,#fcfaff 51%,#f8fbff 100%)!important;color:#1c1b29!important}
 .sidebar{background:#fff!important;border-color:#e9e3f0!important;box-shadow:5px 0 20px #48227b06!important}
-.brand{color:#201d2c!important;gap:10px;font-size:18px!important;line-height:1.13}
+.brand{color:#201d2c!important;display:inline-flex;flex-direction:column;align-items:center;align-self:flex-start;gap:4px;font-size:18px!important;line-height:1.13}
 .brand em,.brand strong{font-style:normal;color:#7e2bd6!important}
 .brand small{color:#8a8995!important}
 .brand-symbol{display:block;object-fit:contain;width:81px;min-width:81px;height:48px}
-.brand .brand-wordmark{display:block;font-size:14px;font-weight:800;letter-spacing:.11em;white-space:nowrap;color:#242030;direction:ltr;text-align:left}
+.brand .brand-wordmark{display:block;font-size:14px;font-weight:800;letter-spacing:.11em;white-space:nowrap;color:#242030;direction:ltr;text-align:center}
 
 nav button,.nav-link,.back-link{color:#64677a!important}
 nav button.selected,nav button:hover,.nav-link.active,.current-link{background:#f1eafa!important;border-color:#e5d6f9!important;color:#7022bb!important}
