@@ -105,3 +105,33 @@ test("Authorized sales creation is scoped and audit logged using one D1 batch",a
   assert.ok(prepared.some(p=>p.sql.startsWith("INSERT INTO audit_events")));
  }finally{globalThis.fetch=saved}
 });
+
+test("Pilot UI and organization discovery require a verified Access session",async()=>{
+ for(const path of ["/pilot/","/pilot/clients.js","/api/organizations"]){
+  assert.equal((await app.fetch(req(path),{})).status,503);
+  assert.equal((await app.fetch(req(path),config)).status,401);
+ }
+ const saved=globalThis.fetch;
+ globalThis.fetch=certs;
+ try {
+  const headers={"Cf-Access-Jwt-Assertion":jwt()};
+  const page=await app.fetch(req("/pilot/",{headers}),config);
+  assert.equal(page.status,200);
+  assert.match(page.headers.get("Content-Security-Policy"),/frame-ancestors 'none'/);
+  assert.match(await page.text(),/BUSINESS SUITE/);
+  const script=await app.fetch(req("/pilot/clients.js",{headers}),config);
+  assert.equal(script.status,200);
+  const src=await script.text();
+  assert.doesNotThrow(()=>new Function(src));
+  const organizations=[{id:"org1",name:"Company",role:"viewer"}];
+  const db={prepare(sql){
+   assert.match(sql,/m.user_id=\? AND m.status='active' AND o.status='active'/);
+   return {bind(userId){
+    assert.equal(userId,"user-1");
+    return {all:async()=>({results:organizations})};
+   }};
+  }};
+  const result=await app.fetch(req("/api/organizations",{headers}),{...config,DB:db});
+  assert.deepEqual(await result.json(),{organizations});
+ }finally{globalThis.fetch=saved}
+});

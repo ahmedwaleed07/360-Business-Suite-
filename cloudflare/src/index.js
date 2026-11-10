@@ -1,3 +1,5 @@
+import { pilotPage, pilotScript } from "./pilot.js";
+
 // ASAS 360° Business Suite – Cloudflare-first staging API.
 // Production authorization must be configured with a valid Cloudflare Access
 // application, and the SaaS customer-login system is a separate deliverable.
@@ -71,7 +73,17 @@ async function accessPrincipal(request,env) {
   return {principal};
 }
 async function requireMembership(db,orgId,userId) {
-  return db.prepare("SELECT role FROM memberships WHERE organization_id=? AND user_id=? AND status='active' LIMIT 1").bind(orgId,userId).first();
+  return db.prepare(`SELECT m.role FROM memberships m JOIN organizations o ON o.id=m.organization_id
+    WHERE m.organization_id=? AND m.user_id=? AND m.status='active' AND o.status='active'`)
+    .bind(orgId,userId).first();
+}
+async function listOrganizations(env,principal) {
+  if(!env.DB)return json({error:"database_not_bound"},503);
+  const result=await env.DB.prepare(`SELECT o.id,o.name,m.role FROM memberships m
+    JOIN organizations o ON o.id=m.organization_id
+    WHERE m.user_id=? AND m.status='active' AND o.status='active' ORDER BY o.name,o.id`)
+    .bind(principal.userId).all();
+  return json({organizations:result.results});
 }
 const validOrg=/^[a-zA-Z0-9_-]{1,64}$/;
 const validStages=new Set(["lead","qualified","proposal","negotiation","won","lost"]);
@@ -128,9 +140,17 @@ export default {
     if(request.method==="GET"&&path==="/health")return json({service:"asas-business-suite-api",status:"staging",production_ready:false});
     if(request.method==="OPTIONS"&&path==="/public/ads")return new Response(null,{status:204,headers:{...cors(request,env),"Access-Control-Allow-Methods":"GET, OPTIONS","Access-Control-Allow-Headers":"Content-Type","Cache-Control":"no-store"}});
     if(request.method==="GET"&&path==="/public/ads")return json(await publicAds(env),200,cors(request,env));
-    if(path.startsWith("/api/")) {
+    if(path.startsWith("/pilot/")||path.startsWith("/api/")) {
       const auth=await accessPrincipal(request,env);
       if(auth.error)return auth.error;
+      if(request.method==="GET"&&path==="/pilot/")return new Response(pilotPage,{headers:{
+        ...noCache,"Content-Type":"text/html; charset=utf-8",
+        "Content-Security-Policy":"default-src 'none'; script-src 'self'; connect-src 'self'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
+      }});
+      if(request.method==="GET"&&path==="/pilot/clients.js")return new Response(pilotScript,{headers:{
+        ...noCache,"Content-Type":"application/javascript; charset=utf-8"
+      }});
+      if(request.method==="GET"&&path==="/api/organizations")return listOrganizations(env,auth.principal);
       const match=path.match(/^\/api\/organizations\/([a-zA-Z0-9_-]{1,64})\/crm\/accounts$/);
       if(match)return crmRoute(request,env,match[1],auth.principal);
       return json({error:"not_found"},404);

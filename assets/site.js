@@ -15,7 +15,13 @@ function render(){const c=companies[company];clear($("kpis"));[["العملاء 
 function renderLeads(){clear($("customersTable"));const q=$("customerSearch").value.trim().toLowerCase();companies[company].leads.filter(x=>x[0].toLowerCase().includes(q)).forEach(x=>{const tr=make("tr");[x[0],x[1],money(x[2]),x[3]].forEach(t=>tr.append(make("td",t)));$("customersTable").append(tr)})}
 function active(){return (paid.length?paid:livePaid).slice(0,5)}
 function adNow(){const a=active();return a.length?a[index%a.length]:{headline:"Your Business. Our Vision.",subtitle:"CRM • ERP • Integrated Business Solutions",link:"https://asas360.com",advertiser:"ASAS 360°",format:"motion",house:true}}
-function renderAd(){const b=$("adBanner"),a=adNow();clear(b);const text=make("div",undefined,"adcopy");text.append(make("span",a.house?"ASAS 360° • ALWAYS ON":"SPONSORED ADVERTISEMENT","overline"),make("h2",a.headline),make("p",a.subtitle||a.advertiser));if(a.link){const link=make("a","اكتشف المزيد ↗");link.href=httpsOnly(a.link)||"https://asas360.com";link.target="_blank";link.rel="noopener noreferrer sponsored";text.append(link)}b.append(text);if(a.format==="video"&&a.video&&!reduced){const v=make("video");v.src=a.video;v.autoplay=true;v.muted=true;v.loop=true;v.playsInline=true;v.preload="metadata";b.prepend(v);v.play().catch(()=>{});const btn=make("button","تشغيل الصوت","sound");btn.addEventListener("click",()=>{v.muted=!v.muted;btn.textContent=v.muted?"تشغيل الصوت":"كتم الصوت"});b.append(btn)}const n=active().length;$("adStatus").textContent=n?"إعلان "+(index%n+1)+" من "+n+(paid.length?" • تجربة محلية":" • Cloudflare"):"إعلان ASAS 360° الاحتياطي";$("adPause").textContent=paused?"▶":"Ⅱ"}
+function renderAd(){const b=$("adBanner"),a=adNow();clear(b);const text=make("div",undefined,"adcopy");text.append(make("span",a.house?"ASAS 360° • ALWAYS ON":"SPONSORED ADVERTISEMENT","overline"),make("h2",a.headline),make("p",a.subtitle||a.advertiser));if(a.link){const link=make("a","اكتشف المزيد ↗");link.href=httpsOnly(a.link)||"https://asas360.com";link.target="_blank";link.rel="noopener noreferrer sponsored";text.append(link)}b.append(text);if(a.format==="video"&&a.video&&!reduced){const v=make("video");v.src=a.video;v.autoplay=!paused;v.muted=true;v.loop=true;v.playsInline=true;v.preload="metadata";b.prepend(v);if(!paused)v.play().catch(()=>{});const btn=make("button","تشغيل الصوت","sound");btn.addEventListener("click",()=>{v.muted=!v.muted;btn.textContent=v.muted?"تشغيل الصوت":"كتم الصوت"});b.append(btn)}const n=active().length;$("adStatus").textContent=n?"إعلان "+(index%n+1)+" من "+n+(paid.length?" • تجربة محلية":" • Cloudflare"):"إعلان ASAS 360° الاحتياطي";updateAdPause()}
+function updateAdPause(){
+ const button=$("adPause");
+ $("adBanner").classList.toggle("ad-paused",paused);
+ button.textContent=paused?"▶":"Ⅱ";
+ button.setAttribute("aria-label",paused?"استئناف الإعلان":"إيقاف الإعلان مؤقتاً");
+}
 function rotation(){clearInterval(timer);timer=null;if(!paused&&!reduced&&active().length>1){timer=setInterval(()=>{if(view==="home"&&!document.hidden){index=(index+1)%active().length;renderAd()}},12000)}}
 function next(n){if(active().length)index=(index+n+active().length)%active().length;renderAd();rotation()}
 function renderCampaigns(){const list=$("adCampaigns");clear(list);$("adCount").textContent=paid.length+" / 5";if(!paid.length)list.append(make("p","لا يوجد معلنون؛ يتم عرض إعلان ASAS 360° تلقائياً."));paid.forEach((a,i)=>{const r=make("div",undefined,"line"),btn=make("button","حذف");btn.className="mainbtn";btn.type="button";btn.addEventListener("click",()=>{if(role!=="platform")return;paid.splice(i,1);index=0;renderCampaigns();renderAd();rotation()});r.append(make("span",a.advertiser),btn);list.append(r)})}
@@ -25,7 +31,13 @@ $("company").addEventListener("change",e=>{company=e.target.value;render()});
 $("role").addEventListener("change",e=>{role=e.target.value;render()});
 $("customerSearch").addEventListener("input",renderLeads);
 $("addCustomer").addEventListener("click",()=>{if($("addCustomer").disabled)return;const name=prompt("اسم العميل التجريبي:");if(!name||!name.trim())return;companies[company].leads.unshift([name.trim().slice(0,90),"عميل جديد",0,"موظف"]);render()});
-$("adPrev").addEventListener("click",()=>next(-1));$("adNext").addEventListener("click",()=>next(1));$("adPause").addEventListener("click",()=>{paused=!paused;renderAd();rotation()});
+$("adPrev").addEventListener("click",()=>next(-1));$("adNext").addEventListener("click",()=>next(1));$("adPause").addEventListener("click",()=>{paused=!paused;
+ const video=$("adBanner").querySelector("video");
+ if(video){
+  if(paused)video.pause();
+  else video.play().catch(()=>{});
+ }
+ updateAdPause();rotation()});
 $("adForm").addEventListener("submit",e=>{e.preventDefault();if(role!=="platform")return;if(paid.length===5){alert("الحد الأقصى خمسة إعلانات");return}const d=new FormData(e.target),video=httpsOnly(String(d.get("video")||"").trim()),link=httpsOnly(String(d.get("link")||"").trim()),format=String(d.get("format"));if(video===null||link===null||(format==="video"&&!video)){alert("يرجى إدخال روابط HTTPS صحيحة");return}paid.push({advertiser:String(d.get("advertiser")).trim().slice(0,60),headline:String(d.get("headline")).trim().slice(0,120),subtitle:String(d.get("subtitle")).trim().slice(0,180),format,video,link});index=0;e.target.reset();screen("home");rotation()});
 render();rotation();
 

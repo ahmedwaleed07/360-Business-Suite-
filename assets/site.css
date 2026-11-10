@@ -4,3 +4,5 @@
 .nav-project-link:hover,.nav-project-link:focus-visible{background:#2f4a64}
 .new-feature{float:left;font-size:10px;color:#b4e2d6}
 @media(max-width:750px){.nav-project-link{white-space:nowrap;padding:8px}}
+
+.adbanner.ad-paused::before,.adbanner.ad-paused::after,.ad-paused .adcopy{animation-play-state:paused}
