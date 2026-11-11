@@ -1,4 +1,5 @@
 import { pilotPage, pilotScript } from "./pilot.js";
+import { accountingPage, accountingScript, erpSettings, readAccounting } from "./accounting.js";
 
 // ASAS 360° Business Suite – Cloudflare-first staging API.
 // Production authorization must be configured with a valid Cloudflare Access
@@ -125,6 +126,24 @@ async function crmRoute(request,env,orgId,principal) {
   }
   return json({error:"method_not_allowed"},405,{"Allow":"GET, POST"});
 }
+async function accountingRoute(request,env,orgId,view,principal) {
+  if(request.method!=="GET")return json({error:"method_not_allowed"},405,{"Allow":"GET"});
+  if(!env.DB)return json({error:"database_not_bound"},503);
+  const membership=await requireMembership(env.DB,orgId,principal.userId);
+  if(!membership||!["owner","admin"].includes(membership.role))return json({error:"not_found"},404);
+  const settings=erpSettings(env);
+  if(!settings)return json({error:"erp_not_configured"},503);
+  if(settings.organizationId!==orgId)return json({error:"not_found"},404);
+  const raw=new URL(request.url).searchParams.get("offset")??"0";
+  if(!/^\d{1,9}$/.test(raw)||Number(raw)%50!==0)return json({error:"invalid_offset"},400);
+  try {
+    return json(await readAccounting(settings,view,Number(raw)));
+  } catch(error) {
+    if(error instanceof RangeError&&error.message==="unknown_view")return json({error:"not_found"},404);
+    return json({error:"erp_unavailable"},502);
+  }
+}
+
 async function publicAds(env) {
   if(!env?.DB)return {advertisements:[HOUSE_AD],fallback:true};
   try {
@@ -143,14 +162,16 @@ export default {
     if(path.startsWith("/pilot/")||path.startsWith("/api/")) {
       const auth=await accessPrincipal(request,env);
       if(auth.error)return auth.error;
-      if(request.method==="GET"&&path==="/pilot/")return new Response(pilotPage,{headers:{
+      if(request.method==="GET"&&["/pilot/","/pilot/accounting"].includes(path))return new Response(path==="/pilot/"?pilotPage:accountingPage,{headers:{
         ...noCache,"Content-Type":"text/html; charset=utf-8",
         "Content-Security-Policy":"default-src 'none'; script-src 'self'; connect-src 'self'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
       }});
-      if(request.method==="GET"&&path==="/pilot/clients.js")return new Response(pilotScript,{headers:{
+      if(request.method==="GET"&&["/pilot/clients.js","/pilot/accounting.js"].includes(path))return new Response(path==="/pilot/clients.js"?pilotScript:accountingScript,{headers:{
         ...noCache,"Content-Type":"application/javascript; charset=utf-8"
       }});
       if(request.method==="GET"&&path==="/api/organizations")return listOrganizations(env,auth.principal);
+      const accounting=path.match(/^\/api\/organizations\/([a-zA-Z0-9_-]{1,64})\/accounting\/([a-z]+)$/);
+      if(accounting)return accountingRoute(request,env,accounting[1],accounting[2],auth.principal);
       const match=path.match(/^\/api\/organizations\/([a-zA-Z0-9_-]{1,64})\/crm\/accounts$/);
       if(match)return crmRoute(request,env,match[1],auth.principal);
       return json({error:"not_found"},404);

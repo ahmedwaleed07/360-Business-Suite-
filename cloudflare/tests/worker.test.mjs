@@ -135,3 +135,42 @@ test("Pilot UI and organization discovery require a verified Access session",asy
   assert.deepEqual(await result.json(),{organizations});
  }finally{globalThis.fetch=saved}
 });
+
+test("Accounting reads only the configured company after checking active membership",async()=>{
+ const saved=globalThis.fetch;
+ const erp={ERP_ORIGIN:"https://erp.example.com",ERP_TOKEN:"test-key:test-secret",ERP_COMPANY:"Pilot Co",ERP_ORGANIZATION_ID:"org1"};
+ let role="viewer";
+ let ledgerCompany="Pilot Co";
+ let calls=0;
+ globalThis.fetch=async(input, options)=>{
+  if(String(input).includes("/cdn-cgi/access/certs"))return certs();
+  calls++;
+  const url=new URL(input);
+  assert.equal(url.pathname,"/api/resource/GL%20Entry");
+  assert.deepEqual(JSON.parse(url.searchParams.get("filters")),[["company","=","Pilot Co"],["is_cancelled","=",0]]);
+  assert.equal(url.searchParams.get("limit_start"),"50");
+  assert.equal(options.redirect,"error");
+  assert.equal(options.headers.Authorization,"token test-key:test-secret");
+  return Response.json({data:[{company:ledgerCompany,debit:15,credit:0}]});
+ };
+ const DB={prepare(){return {bind(){return {first:async()=>({role})}}}}};
+ const run=(org,options={})=>app.fetch(req("/api/organizations/"+org+"/accounting/ledger?offset=50",{
+  headers:{"Cf-Access-Jwt-Assertion":jwt()},...options
+ }),{...config,DB,...erp});
+ try {
+  assert.equal((await run("org1")).status,404);
+  role="owner";
+  assert.equal((await run("org2")).status,404);
+  assert.equal((await run("org1",{method:"POST"})).status,405);
+  assert.equal(calls,0);
+  const res=await run("org1");
+  assert.equal(res.status,200);
+  const result=await res.json();
+  assert.deepEqual(result.rows,[["","","","",15,0]]);
+  assert.equal(result.workspaceUrl,"https://erp.example.com/app/accounting");
+  ledgerCompany="Different Company";
+  assert.equal((await run("org1")).status,502);
+ } finally {
+  globalThis.fetch=saved;
+ }
+});

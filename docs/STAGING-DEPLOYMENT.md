@@ -46,3 +46,20 @@ Cloudflare API confirms deployment success and that workers.dev is enabled. Dire
 - The current permissions model is intentionally small and must expand to module/action/record/field/approval limits.
 - Billing permissions were insufficient for reading account plan details; no paid subscription was explicitly activated.
 - R2, ERPNext and payment/financial processing remain unconnected.
+
+## ERPNext accounting pilot
+
+Open `/pilot/accounting` from the internal CRM navigation. The module lists the chart of accounts, sales and purchase invoices, payment entries, journals, and active general ledger entries. Balances and financial statements are available through the ERPNext Accounting workspace. Users enter, approve, and post transactions there under their own ERPNext accounts.
+
+Configure these Worker settings after provisioning a separate ERPNext staging site:
+
+| Setting | Value |
+| --- | --- |
+| `ERP_ORIGIN` | ERPNext HTTPS origin |
+| `ERP_ORGANIZATION_ID` | ASAS D1 organization ID for the pilot |
+| `ERP_COMPANY` | Exact ERPNext Company document name |
+| `ERP_TOKEN` | Worker secret with the ERPNext integration user's API key and secret joined by a colon |
+
+Use a dedicated ERPNext integration user with read access to the six DocTypes and access restricted to the linked company. The Worker checks an active owner or admin membership, sends the fixed ERPNext company filter, and rejects records returned for any other company. This configuration supports one pilot company. The ERPNext workspace uses its own session.
+
+Before the pilot accepts real records, open each view using authorized and unauthorized staging memberships. Compare the ledger and invoices against known ERPNext transactions, including cancelled entries and currency fields.

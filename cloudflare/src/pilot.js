@@ -21,7 +21,7 @@ export const pilotPage = `<!doctype html>
   <main>
     <h1>إدارة العملاء</h1>
     <p>بيئة الاختبار الداخلية</p>
-    <a href="/cdn-cgi/access/logout">تسجيل الخروج</a>
+    <nav aria-label="التنقل"><a href="/pilot/accounting">المحاسبة</a> · <a href="/cdn-cgi/access/logout">تسجيل الخروج</a></nav>
     <p id="status" role="status"></p>
     <section id="workspace" hidden>
       <label>الشركة <select id="organization"></select></label>
