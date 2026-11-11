@@ -63,3 +63,7 @@ Configure these Worker settings after provisioning a separate ERPNext staging si
 Use a dedicated ERPNext integration user with read access to the six DocTypes and access restricted to the linked company. The Worker checks an active owner or admin membership, sends the fixed ERPNext company filter, and rejects records returned for any other company. This configuration supports one pilot company. The ERPNext workspace uses its own session.
 
 Before the pilot accepts real records, open each view using authorized and unauthorized staging memberships. Compare the ledger and invoices against known ERPNext transactions, including cancelled entries and currency fields.
+
+### CRM to ERPNext
+
+Apply migration `0003_crm_erp_links.sql` to the ASAS staging database. Give the integration user read access to Sales Order and Purchase Order in addition to the accounting DocTypes. A company owner or admin can link a CRM account using the exact number of a submitted sales order or sales invoice from the configured ERPNext company. Each customer may link to one CRM account in that company. A repeated request for the same link succeeds, and a conflicting link requires operator review. The link records the actor and timestamp. The CRM account then provides filtered views of that customer's sales orders, invoices, and payment entries.

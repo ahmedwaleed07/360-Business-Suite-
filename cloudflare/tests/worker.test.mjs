@@ -174,3 +174,52 @@ test("Accounting reads only the configured company after checking active members
   globalThis.fetch=saved;
  }
 });
+
+test("CRM link is verified against a submitted ERP document and scopes customer receipts",async()=>{
+ const saved=globalThis.fetch;
+ const erp={ERP_ORIGIN:"https://erp.example.com",ERP_TOKEN:"fake",ERP_COMPANY:"Pilot Co",ERP_ORGANIZATION_ID:"org1"};
+ let customer;
+ let documentStatus=0;
+ let insertCount=0;
+ let wrongParty=false;
+ globalThis.fetch=async input=>{
+  const url=new URL(input);
+  if(url.pathname==="/cdn-cgi/access/certs")return certs();
+  const filters=JSON.parse(url.searchParams.get("filters"));
+  if(url.pathname==="/api/resource/Sales%20Order"){
+   assert.deepEqual(filters,[["company","=","Pilot Co"],["name","=","SO-1"],["docstatus","=",1]]);
+   return Response.json({data:[{company:"Pilot Co",name:"SO-1",customer:"CUST-1",docstatus:documentStatus}]});
+  }
+  assert.equal(url.pathname,"/api/resource/Payment%20Entry");
+  assert.deepEqual(filters,[["company","=","Pilot Co"],["party_type","=","Customer"],["party","=","CUST-1"]]);
+  return Response.json({data:[{company:"Pilot Co",party_type:"Customer",party:wrongParty?"OTHER":"CUST-1"}]});
+ };
+ const DB={prepare(sql){return {bind(...args){return {
+  first:async()=>sql.includes("SELECT erp_customer")?(customer?{erp_customer:customer}:null):{role:"admin"},
+  run:async()=>{
+   assert.match(sql,/m.status='active'/);
+   assert.deepEqual(args,["CUST-1","user-1","org1","crm-1"]);
+   insertCount++;
+   customer=args[0];
+  }
+ }}}}};
+ const headers={"Cf-Access-Jwt-Assertion":jwt(),Origin:base};
+ const env={...config,DB,...erp};
+ const link=()=>app.fetch(req("/api/organizations/org1/crm/accounts/crm-1/erp-link",{
+  method:"POST",headers,body:JSON.stringify({source:"orders",documentId:"SO-1"})
+ }),env);
+ const receipts=()=>app.fetch(req("/api/organizations/org1/accounting/payments?crmAccount=crm-1",{headers}),env);
+ try {
+  assert.equal((await receipts()).status,404);
+  assert.equal((await link()).status,404);
+  assert.equal(insertCount,0);
+  documentStatus=1;
+  assert.equal((await link()).status,200);
+  assert.equal(insertCount,1);
+  assert.equal((await receipts()).status,200);
+  wrongParty=true;
+  assert.equal((await receipts()).status,502);
+ } finally {
+  globalThis.fetch=saved;
+ }
+});

@@ -1,6 +1,8 @@
 const invoiceFields = {name:"الفاتورة", posting_date:"تاريخ القيد", status:"الحالة", currency:"العملة", grand_total:"الإجمالي", outstanding_amount:"المتبقي"};
 const views = {
   accounts: {label:"دليل الحسابات", type:"Account", sort:"name", fields:{name:"الحساب", parent_account:"الحساب الرئيسي", root_type:"التصنيف", account_currency:"العملة"}},
+  orders: {label:"أوامر البيع", type:"Sales Order", date:"transaction_date", fields:{name:"الأمر", transaction_date:"التاريخ", customer:"العميل", status:"الحالة", currency:"العملة", grand_total:"الإجمالي"}},
+  procurement: {label:"أوامر الشراء", type:"Purchase Order", date:"transaction_date", fields:{name:"الأمر", transaction_date:"التاريخ", supplier:"المورّد", status:"الحالة", currency:"العملة", grand_total:"الإجمالي"}},
   sales: {label:"فواتير المبيعات", type:"Sales Invoice", fields:{...invoiceFields, customer:"العميل"}},
   purchases: {label:"فواتير المشتريات", type:"Purchase Invoice", fields:{...invoiceFields, supplier:"المورّد"}},
   payments: {label:"القبض والصرف", type:"Payment Entry", fields:{name:"السند", posting_date:"تاريخ القيد", payment_type:"النوع", party:"الطرف", paid_amount:"المدفوع", paid_from_account_currency:"عملة الحساب المدفوع منه", received_amount:"المستلم", paid_to_account_currency:"عملة الحساب المستلم"}},
@@ -19,19 +21,18 @@ export function erpSettings(env) {
   }
 }
 
-export async function readAccounting(settings, viewId, offset, fetcher = fetch) {
-  if (!Object.hasOwn(views, viewId)) throw new RangeError("unknown_view");
-  const view = views[viewId];
-  const fields = Object.keys(view.fields);
+export function customerView(view) {
+  return ["orders","sales","payments"].includes(view);
+}
+
+async function readRecords(settings, view, filters, fields, offset, limit, fetcher = fetch) {
   const url = new URL("/api/resource/" + encodeURIComponent(view.type), settings.origin);
-  const filters = [["company", "=", settings.company]];
-  if (viewId === "ledger") filters.push(["is_cancelled", "=", 0]);
   url.search = new URLSearchParams({
-    filters: JSON.stringify(filters),
+    filters: JSON.stringify([["company", "=", settings.company], ...filters]),
     fields: JSON.stringify([...new Set([...fields, "name", "company"])]),
-    order_by: view.sort === "name" ? "name asc" : "posting_date desc, name desc",
+    order_by: view.sort === "name" ? "name asc" : (view.date || "posting_date") + " desc, name desc",
     limit_start: String(offset),
-    limit_page_length: "51"
+    limit_page_length: String(limit)
   });
   const response = await fetcher(url, {
     headers: { Accept:"application/json", Authorization:"token " + settings.token },
@@ -40,8 +41,30 @@ export async function readAccounting(settings, viewId, offset, fetcher = fetch) 
   });
   if (!response.ok) throw new Error("erp_request_failed");
   const {data} = await response.json();
-  if (!Array.isArray(data) || data.length > 51 || data.some(row => row?.company !== settings.company)) {
+  if (!Array.isArray(data) || data.length > limit || data.some(row => row?.company !== settings.company)) {
     throw new Error("erp_response_scope_invalid");
+  }
+  return data;
+}
+
+export async function resolveErpCustomer(settings, source, documentId) {
+  if (!["orders","sales"].includes(source)) return null;
+  const rows = await readRecords(settings, views[source], [["name","=",documentId],["docstatus","=",1]], ["customer","docstatus"], 0, 1);
+  const row = rows[0];
+  return row?.name === documentId && row.docstatus === 1 && typeof row.customer === "string" && row.customer.trim() ? row.customer : null;
+}
+
+export async function readAccounting(settings, viewId, offset, fetcher = fetch, customer = null) {
+  if (!Object.hasOwn(views, viewId) || (customer && !customerView(viewId))) throw new RangeError("unknown_view");
+  const view = views[viewId];
+  const fields = Object.keys(view.fields);
+  const filters = [];
+  if (viewId === "ledger") filters.push(["is_cancelled", "=", 0]);
+  if (customer && viewId === "payments") filters.push(["party_type","=","Customer"],["party","=",customer]);
+  else if (customer) filters.push(["customer","=",customer]);
+  const data = await readRecords(settings, view, filters, viewId === "payments" && customer ? [...fields,"party_type"] : fields, offset, 51, fetcher);
+  if (customer && data.some(row => viewId === "payments" ? row.party_type !== "Customer" || row.party !== customer : row.customer !== customer)) {
+    throw new Error("erp_response_customer_invalid");
   }
   return {
     columns:Object.values(view.fields),
@@ -102,13 +125,18 @@ const next = element("next");
 const workspace = element("erp-workspace");
 const header = element("columns");
 const body = element("records");
+const params = new URLSearchParams(location.search);
+const crmAccount = params.get("crmAccount");
 let offset = 0;
 let pending;
 
 async function get(path, signal) {
   const response = await fetch(path, {signal, redirect:"error", cache:"no-store"});
   if (response.status === 401) throw new Error("انتهت الجلسة. حدّث الصفحة وسجّل الدخول.");
-  if (response.status === 404) throw new Error("المحاسبة غير مفعّلة لهذه الشركة.");
+  if (response.status === 404) {
+    const error = await response.json();
+    throw new Error(error.error === "crm_account_not_linked" ? "اربط سجل العميل من صفحة إدارة العملاء أولاً." : "المحاسبة غير مفعّلة لهذه الشركة.");
+  }
   if (response.status === 503) throw new Error("لم يُستكمل إعداد اتصال ERPNext.");
   if (!response.ok) throw new Error("تعذّر تحميل البيانات من النظام. حاول مرة أخرى.");
   return response.json();
@@ -125,7 +153,9 @@ async function load() {
   message.textContent = "جارٍ تحميل السجل…";
   try {
     const path = "/api/organizations/" + encodeURIComponent(company.value) + "/accounting/" + view.value;
-    const data = await get(path + "?offset=" + offset, controller.signal);
+    const query = new URLSearchParams({offset});
+    if (crmAccount) query.set("crmAccount", crmAccount);
+    const data = await get(path + "?" + query, controller.signal);
     if (controller.signal.aborted) return;
     const titles = header.insertRow();
     for (const label of data.columns) {
@@ -158,7 +188,13 @@ next.addEventListener("click", () => { offset += 50; load(); });
 async function start() {
   try {
     const { organizations } = await get("/api/organizations");
-    const allowed = organizations.filter(org => ["owner", "admin"].includes(org.role));
+    const allowed = organizations.filter(org => ["owner", "admin"].includes(org.role) && (!crmAccount || org.id === params.get("company")));
+    if (crmAccount) {
+      document.querySelector("h1").textContent = "معاملات عميل CRM";
+      for (const option of Array.from(view.options)) {
+        if (!["orders","sales","payments"].includes(option.value)) option.remove();
+      }
+    }
     if (!allowed.length) {
       message.textContent = "لا توجد شركة لديك صلاحية عرض محاسبتها.";
       return;

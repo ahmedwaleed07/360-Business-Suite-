@@ -34,7 +34,7 @@ export const pilotPage = `<!doctype html>
         </select></label>
         <button id="save" type="submit">إضافة العميل</button>
       </form>
-      <table><thead><tr><th scope="col">الاسم</th><th scope="col">المرحلة</th></tr></thead><tbody id="accounts"></tbody></table>
+      <table><thead><tr><th scope="col">الاسم</th><th scope="col">المرحلة</th><th scope="col">معاملات ERP</th></tr></thead><tbody id="accounts"></tbody></table>
     </section>
   </main>
 </body>
@@ -55,6 +55,8 @@ async function api(path, options) {
   const response = await fetch(path, { ...options, cache: "no-store", redirect: "error" });
   if (response.status === 401) throw new Error("انتهت الجلسة. حدّث الصفحة وسجّل الدخول.");
   if (response.status === 403 || response.status === 404) throw new Error("تعذّر الوصول. تحقّق من صلاحيات الشركة.");
+  if (response.status === 409) throw new Error("هذا الحساب أو عميل ERPNext مرتبط بسجل آخر.");
+  if (response.status === 503) throw new Error("لم يُستكمل إعداد اتصال ERPNext.");
   if (!response.ok) throw new Error("تعذّر إكمال العملية. حاول مرة أخرى.");
   return response.json();
 }
@@ -67,6 +69,55 @@ function showError(error) {
   status.textContent = error instanceof TypeError ? "تعذّر الاتصال. حدّث الصفحة للتحقق من الجلسة." : error.message;
 }
 
+function showErpActions(cell, account) {
+  const company = organization.value;
+  const query = new URLSearchParams({ company, crmAccount: account.id });
+  const transactions = document.createElement("a");
+  transactions.href = "/pilot/accounting?" + query;
+  transactions.textContent = "عرض المعاملات";
+  const details = document.createElement("details");
+  const summary = document.createElement("summary");
+  summary.textContent = "ربط عميل ERPNext";
+  const linkForm = document.createElement("form");
+  const sourceLabel = document.createElement("label");
+  sourceLabel.textContent = "نوع المستند ";
+  const source = document.createElement("select");
+  source.add(new Option("أمر بيع", "orders"));
+  source.add(new Option("فاتورة مبيعات", "sales"));
+  sourceLabel.append(source);
+  const idLabel = document.createElement("label");
+  idLabel.textContent = "رقم المستند المعتمد ";
+  const input = document.createElement("input");
+  input.required = true;
+  input.maxLength = 140;
+  idLabel.append(input);
+  const submit = document.createElement("button");
+  submit.textContent = "حفظ الربط";
+  const feedback = document.createElement("span");
+  feedback.setAttribute("role", "status");
+  linkForm.append(sourceLabel, idLabel, submit, feedback);
+  details.append(summary, linkForm);
+  cell.append(transactions, details);
+  linkForm.addEventListener("submit", async event => {
+    event.preventDefault();
+    submit.disabled = true;
+    feedback.textContent = " جارٍ التحقق…";
+    try {
+      await api("/api/organizations/" + encodeURIComponent(company) + "/crm/accounts/" + encodeURIComponent(account.id) + "/erp-link", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({source: source.value, documentId: input.value})
+      });
+      linkForm.reset();
+      feedback.textContent = " تم حفظ الربط.";
+    } catch (error) {
+      feedback.textContent = " " + error.message;
+    } finally {
+      submit.disabled = false;
+    }
+  });
+}
+
 async function loadAccounts() {
   const current = ++requestNumber;
   accounts.replaceChildren();
@@ -75,12 +126,14 @@ async function loadAccounts() {
   try {
     const result = await api(accountPath());
     if (current !== requestNumber) return;
+    const membership = memberships.find(item => item.id === organization.value);
     for (const account of result.accounts) {
       const row = accounts.insertRow();
       row.insertCell().textContent = account.name;
       row.insertCell().textContent = stages.get(account.stage) || account.stage;
+      const erpCell = row.insertCell();
+      if (["owner","admin"].includes(membership?.role)) showErpActions(erpCell, account);
     }
-    const membership = memberships.find(item => item.id === organization.value);
     form.hidden = !["owner", "admin", "manager", "sales"].includes(membership?.role);
     status.textContent = result.accounts.length ? "" : "لا توجد سجلات عملاء لهذه الشركة.";
   } catch (error) {

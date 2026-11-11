@@ -1,5 +1,5 @@
 import { pilotPage, pilotScript } from "./pilot.js";
-import { accountingPage, accountingScript, erpSettings, readAccounting } from "./accounting.js";
+import { accountingPage, accountingScript, erpSettings, readAccounting, resolveErpCustomer } from "./accounting.js";
 
 // ASAS 360° Business Suite – Cloudflare-first staging API.
 // Production authorization must be configured with a valid Cloudflare Access
@@ -134,14 +134,62 @@ async function accountingRoute(request,env,orgId,view,principal) {
   const settings=erpSettings(env);
   if(!settings)return json({error:"erp_not_configured"},503);
   if(settings.organizationId!==orgId)return json({error:"not_found"},404);
-  const raw=new URL(request.url).searchParams.get("offset")??"0";
+  const params=new URL(request.url).searchParams;
+  const raw=params.get("offset")??"0";
   if(!/^\d{1,9}$/.test(raw)||Number(raw)%50!==0)return json({error:"invalid_offset"},400);
+  const accountId=params.get("crmAccount");
+  let customer=null;
+  if(accountId!==null) {
+    const link=await env.DB.prepare("SELECT erp_customer FROM crm_erp_customer_links WHERE organization_id=? AND crm_account_id=?")
+      .bind(orgId,accountId).first();
+    if(!link)return json({error:"crm_account_not_linked"},404);
+    customer=link.erp_customer;
+  }
   try {
-    return json(await readAccounting(settings,view,Number(raw)));
+    return json(await readAccounting(settings,view,Number(raw),fetch,customer));
   } catch(error) {
     if(error instanceof RangeError&&error.message==="unknown_view")return json({error:"not_found"},404);
     return json({error:"erp_unavailable"},502);
   }
+}
+
+async function customerLinkRoute(request,env,orgId,accountId,principal) {
+  if(request.method!=="POST")return json({error:"method_not_allowed"},405,{"Allow":"POST"});
+  if(request.headers.get("Origin")!==new URL(request.url).origin)return json({error:"invalid_origin"},403);
+  if(!env.DB)return json({error:"database_not_bound"},503);
+  const membership=await requireMembership(env.DB,orgId,principal.userId);
+  if(!membership||!["owner","admin"].includes(membership.role))return json({error:"not_found"},404);
+  const settings=erpSettings(env);
+  if(!settings)return json({error:"erp_not_configured"},503);
+  if(settings.organizationId!==orgId)return json({error:"not_found"},404);
+  let input;
+  try {
+    if(Number(request.headers.get("Content-Length"))>2048)return json({error:"request_too_large"},413);
+    const raw=await request.text();
+    if(raw.length>2048)return json({error:"request_too_large"},413);
+    input=JSON.parse(raw);
+  } catch {
+    return json({error:"invalid_json"},400);
+  }
+  const documentId=typeof input?.documentId==="string"?input.documentId.trim():"";
+  if(!documentId||documentId.length>140||!["orders","sales"].includes(input.source))return json({error:"invalid_fields"},400);
+  let customer;
+  try {
+    customer=await resolveErpCustomer(settings,input.source,documentId);
+  } catch {
+    return json({error:"erp_unavailable"},502);
+  }
+  if(!customer)return json({error:"erp_document_not_found"},404);
+  await env.DB.prepare(`INSERT INTO crm_erp_customer_links(organization_id,crm_account_id,erp_customer,linked_by)
+    SELECT c.organization_id,c.id,?,m.user_id FROM crm_accounts c
+    JOIN organizations o ON o.id=c.organization_id AND o.status='active'
+    JOIN memberships m ON m.organization_id=c.organization_id AND m.user_id=? AND m.status='active' AND m.role IN ('owner','admin')
+    WHERE c.organization_id=? AND c.id=? ON CONFLICT DO NOTHING`)
+    .bind(customer,principal.userId,orgId,accountId).run();
+  const link=await env.DB.prepare("SELECT erp_customer FROM crm_erp_customer_links WHERE organization_id=? AND crm_account_id=?")
+    .bind(orgId,accountId).first();
+  if(link?.erp_customer!==customer)return json({error:"crm_link_conflict"},409);
+  return json({linked:true});
 }
 
 async function publicAds(env) {
@@ -172,6 +220,8 @@ export default {
       if(request.method==="GET"&&path==="/api/organizations")return listOrganizations(env,auth.principal);
       const accounting=path.match(/^\/api\/organizations\/([a-zA-Z0-9_-]{1,64})\/accounting\/([a-z]+)$/);
       if(accounting)return accountingRoute(request,env,accounting[1],accounting[2],auth.principal);
+      const customerLink=path.match(/^\/api\/organizations\/([a-zA-Z0-9_-]{1,64})\/crm\/accounts\/([a-zA-Z0-9_-]{1,64})\/erp-link$/);
+      if(customerLink)return customerLinkRoute(request,env,customerLink[1],customerLink[2],auth.principal);
       const match=path.match(/^\/api\/organizations\/([a-zA-Z0-9_-]{1,64})\/crm\/accounts$/);
       if(match)return crmRoute(request,env,match[1],auth.principal);
       return json({error:"not_found"},404);
