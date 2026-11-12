@@ -72,7 +72,7 @@
       </div>
       <div class="project-actions">
         <label class="visually-hidden" for="filterTasks">فلترة المهام</label>
-        <select id="filterTasks"><option value="all">كل المهام</option><option value="mine">مهامي</option><option value="open">غير المكتملة</option><option value="done">المكتملة</option></select>
+        <select id="filterTasks"><option value="all">كل المهام</option><option value="mine">مهامي</option><option value="open">غير المكتملة</option><option value="done">المكتملة</option><option value="blocked">بانتظار مهام أخرى</option></select>
         <div class="view-switch" aria-label="طريقة العرض">
           <button id="boardView" class="view-button chosen" aria-pressed="true">لوحة</button>
           <button id="listView" class="view-button" aria-pressed="false">قائمة</button>
@@ -107,6 +107,10 @@
       <label>القسم <select id="taskSection" name="sectionId"></select></label>
       <label>تاريخ الاستحقاق <input name="dueDate" id="taskDue" type="date"></label>
     </div>
+    <fieldset>
+      <legend>مهام يجب إكمالها أولاً</legend>
+      <div id="taskDependencies" class="member-choices"></div>
+    </fieldset>
     <label class="check-line"><input id="taskDone" type="checkbox"> المهمة مكتملة</label>
     <div class="drawer-actions"><button class="primary" type="submit">حفظ التغييرات</button><button type="button" class="secondary" id="cancelTask">إلغاء</button></div>
   </form>

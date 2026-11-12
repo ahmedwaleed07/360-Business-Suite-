@@ -20,7 +20,7 @@ Reference the [Asana feature directory](https://asana.com/features) and [plan co
 | Area | Capabilities | State |
 | --- | --- | --- |
 | Tasks and projects | List, Kanban board, calendar, sections, assignees, due dates, priorities, task duplication, filters and task detail | Available in the public preview. Preview edits are temporary. |
-| Scheduling | Start dates, subtasks, milestones, dependencies, recurring work, timeline and Gantt | Planned. |
+| Scheduling | Start dates, subtasks, milestones, dependencies, recurring work, timeline and Gantt | The preview supports finish-to-start dependencies within a project. Other dependency types and scheduling features are planned. |
 | Collaboration | Comments, mentions, collaborators, inbox, notifications, attachments, approvals, proofing and shared task membership across projects | Section collaborator controls are in the preview. Remaining features and live permissions are pending. |
 | Workflow | Forms, templates, custom fields, reusable rules, intake routing, approvals and workflow automation | Planned. |
 | Leadership | Portfolios, goals, progress updates, dashboards, workload, estimated and actual time, and resource capacity | Planned. |

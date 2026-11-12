@@ -1,4 +1,4 @@
-import {seed,snapshot,addSection,updateSection,reorderSection,removeSection,addTask,updateTask,duplicateTask,removeTask,visibleTasks,counters} from "./projects-core.mjs";
+import {seed,snapshot,addSection,updateSection,reorderSection,removeSection,addTask,updateTask,duplicateTask,removeTask,visibleTasks,counters,pendingDependencies} from "./projects-core.mjs";
 const state=seed(),$=id=>document.getElementById(id),element=(tag,cls,content)=>{
  const e=document.createElement(tag);if(cls)e.className=cls;if(content!==undefined)e.textContent=String(content);return e;
 };
@@ -50,6 +50,17 @@ function openTask(t,sectionId,opener){
  $("taskDone").checked=Boolean(t?.done);
  selectorOptions($("taskAssignee"),[["","بدون مسؤول"],...data().members.map(m=>[m.id,m.name])],t?.assignee||"");
  selectorOptions($("taskSection"),data().sections.map(s=>[s.id,s.name]),t?.sectionId||sectionId||data().sections[0]?.id);
+ const choices=$("taskDependencies");
+ choices.replaceChildren();
+ for(const other of data().tasks.filter(item=>item.id!==t?.id)){
+  const row=element("label","check-line");
+  const checkbox=element("input");
+  checkbox.type="checkbox";checkbox.value=other.id;
+  checkbox.checked=Boolean(t?.dependencies?.includes(other.id));
+  row.append(checkbox,element("span","",other.title));
+  choices.append(row);
+ }
+ if(!choices.children.length)choices.append(element("p","help","أضف مهمة أخرى للمشروع لتحديد اعتماد."));
  showDialog("drawer",opener);
 }
 function openSection(s,opener){
@@ -73,12 +84,12 @@ function taskMenu(e,t){
  const entries=[
   {label:"تعديل التفاصيل",action:()=>openTask(t,null,e.currentTarget)},
   {label:"نسخ المهمة",action:()=>{duplicateTask(state,companyId,t.id);render();notify("تم نسخ المهمة")}},
-  {label:t.done?"إرجاع إلى غير المكتملة":"تحديد مكتملة",action:()=>{updateTask(state,companyId,t.id,{done:!t.done});render()}},
+  {label:t.done?"إرجاع إلى غير المكتملة":"تحديد مكتملة",action:()=>{if(protect(()=>updateTask(state,companyId,t.id,{done:!t.done})))render()}},
   {label:"تبديل الأولوية",action:()=>{const cycle={normal:"high",high:"urgent",urgent:"normal"};updateTask(state,companyId,t.id,{priority:cycle[t.priority]});render()}},
   {divider:true},
   ...x.sections.filter(s=>s.id!==t.sectionId).map(s=>({label:"نقل إلى: "+s.name,action:()=>{updateTask(state,companyId,t.id,{sectionId:s.id});render();notify("تم نقل المهمة")}})),
   {divider:true},
-  {label:"حذف المهمة",danger:true,action:()=>{if(confirm("حذف المهمة من هذه التجربة؟")){removeTask(state,companyId,t.id);render()}}}
+  {label:"حذف المهمة",danger:true,action:()=>{if(confirm("حذف المهمة من هذه التجربة؟")&&protect(()=>removeTask(state,companyId,t.id)))render()}}
  ];
  showMenu(e,entries);
 }
@@ -104,6 +115,8 @@ function taskCard(t){
  const pill=element("span","pill "+(t.priority==="normal"?"":t.priority),labels[t.priority]);
  meta.append(pill,element("span","",memberName(t.assignee)));
  if(t.dueDate)meta.append(element("span","",t.dueDate));
+ const blockedBy=pendingDependencies(t,data().tasks);
+ if(blockedBy.length)meta.append(element("span","pill urgent","بانتظار: "+blockedBy.map(task=>task.title).join("، ")));
  if(t.done)meta.append(element("span","pill","مكتملة"));
  card.append(meta);
  card.addEventListener("click",e=>{if(!e.target.closest("button"))openTask(t,null,card)});
@@ -238,7 +251,7 @@ $("nextMonth").addEventListener("click",()=>shiftMonth(1));
 $("currentMonth").addEventListener("click",()=>shiftMonth(0));
 $("createSection").addEventListener("click",e=>openSection(null,e.currentTarget));
 $("taskForm").addEventListener("submit",e=>{
- e.preventDefault();const patch={title:$("taskTitle").value,description:$("taskDescription").value,assignee:$("taskAssignee").value,priority:$("taskPriority").value,sectionId:$("taskSection").value,dueDate:$("taskDue").value,done:$("taskDone").checked};
+ e.preventDefault();const patch={title:$("taskTitle").value,description:$("taskDescription").value,assignee:$("taskAssignee").value,priority:$("taskPriority").value,sectionId:$("taskSection").value,dueDate:$("taskDue").value,done:$("taskDone").checked,dependencies:Array.from($("taskDependencies").querySelectorAll(":checked"),input=>input.value)};
  const result=protect(()=>editingTask?updateTask(state,companyId,editingTask,patch):addTask(state,companyId,patch.sectionId,patch.title,patch));
  if(result){closeDialog();render();notify("تم حفظ المهمة")}
 });

@@ -42,7 +42,7 @@ export function seed(){
    tasks:[
     {id:"a1",sectionId:"a-ready",title:"إعداد خطة التواصل مع العملاء",description:"ربط الخطة بفرص CRM ومراجعة المواعيد.",assignee:"atlas-sara",priority:"high",dueDate:"2026-11-12",done:false},
     {id:"a2",sectionId:"a-ready",title:"تحديد متطلبات الفرع الجديد",description:"تجميع الاحتياجات قبل طلب الشراء.",assignee:"atlas-me",priority:"normal",dueDate:"",done:false},
-    {id:"a3",sectionId:"a-progress",title:"تجهيز عرض السعر",description:"تحديث عرض السعر وإرساله للمراجعة.",assignee:"atlas-ali",priority:"urgent",dueDate:"2026-11-07",done:false},
+    {id:"a3",dependencies:["a1"],sectionId:"a-progress",title:"تجهيز عرض السعر",description:"تحديث عرض السعر وإرساله للمراجعة.",assignee:"atlas-ali",priority:"urgent",dueDate:"2026-11-07",done:false},
     {id:"a4",sectionId:"a-review",title:"اعتماد قائمة الموردين",description:"اعتماد موردين لشهر نوفمبر.",assignee:"atlas-me",priority:"normal",dueDate:"",done:true}
    ]
   },
@@ -95,6 +95,7 @@ export function addTask(state,companyId,sectionId,title,patch={}){
  const priority=patch.priority||"normal";
  if(!priorities.has(priority))throw Error("الأولوية غير صحيحة");
  const task={id:uuid(),sectionId,title:name,description:text(patch.description||"",2000),assignee,priority,dueDate:validDate(patch.dueDate||""),done:Boolean(patch.done)};
+ task.dependencies=validateDependencies(x,task,patch.dependencies??[]);
  x.tasks.push(task);return task;
 }
 function validDate(value){
@@ -104,8 +105,30 @@ function validDate(value){
  if(Number.isNaN(d.valueOf())||d.toISOString().slice(0,10)!==value)throw Error("تاريخ غير صالح");
  return value;
 }
+function validateDependencies(project,task,dependencies){
+ if(!Array.isArray(dependencies))throw Error("قائمة الاعتماد غير صالحة");
+ const unique=[...new Set(dependencies)];
+ const tasks=new Map(project.tasks.map(item=>[item.id,item]));
+ for(const id of unique){
+  if(!tasks.has(id))throw Error("المهمة المطلوبة ليست ضمن هذا المشروع");
+ }
+ const pending=[...unique],seen=new Set();
+ while(pending.length){
+  const id=pending.pop();
+  if(id===task.id)throw Error("هذا الربط ينشئ اعتماداً دائرياً");
+  if(seen.has(id))continue;
+  seen.add(id);
+  for(const predecessor of tasks.get(id)?.dependencies??[])pending.push(predecessor);
+ }
+ if(task.done&&unique.some(id=>!tasks.get(id).done))throw Error("أكمل المهام المطلوبة قبل إكمال هذه المهمة");
+ return unique;
+}
+export function pendingDependencies(task,tasks){
+ const required=new Set(task.dependencies??[]);
+ return tasks.filter(other=>required.has(other.id)&&!other.done);
+}
 export function updateTask(state,companyId,id,patch){
- const x=org(state,companyId),t=findTask(x,id);
+ const x=org(state,companyId),original=findTask(x,id),t={...original};
  if(patch.title!==undefined){const n=text(patch.title,150);if(!n)throw Error("اسم المهمة مطلوب");t.title=n}
  if(patch.description!==undefined)t.description=text(patch.description,2000);
  if(patch.sectionId!==undefined){findSection(x,patch.sectionId);t.sectionId=patch.sectionId}
@@ -116,18 +139,25 @@ export function updateTask(state,companyId,id,patch){
  if(patch.priority!==undefined){if(!priorities.has(patch.priority))throw Error("أولوية غير صحيحة");t.priority=patch.priority}
  if(patch.dueDate!==undefined)t.dueDate=validDate(patch.dueDate);
  if(patch.done!==undefined)t.done=Boolean(patch.done);
- return t;
+ t.dependencies=validateDependencies(x,t,patch.dependencies??t.dependencies??[]);
+ if(!t.done&&original.done&&x.tasks.some(other=>other.done&&other.dependencies?.includes(id))){
+  throw Error("أعد فتح المهام المكتملة التي تعتمد على هذه المهمة أولاً");
+ }
+ Object.assign(original,t);
+ return original;
 }
 export function duplicateTask(state,companyId,id){
  const x=org(state,companyId),t=findTask(x,id);
  return addTask(state,companyId,t.sectionId,t.title+" (نسخة)",{description:t.description,assignee:t.assignee,priority:t.priority,dueDate:t.dueDate});
 }
 export function removeTask(state,companyId,id){
- const x=org(state,companyId);findTask(x,id);x.tasks=x.tasks.filter(t=>t.id!==id);return true;
+ const x=org(state,companyId);findTask(x,id);
+ if(x.tasks.some(t=>t.dependencies?.includes(id)))throw Error("أزل روابط الاعتماد على هذه المهمة قبل حذفها");
+ x.tasks=x.tasks.filter(t=>t.id!==id);return true;
 }
 export function visibleTasks(state,companyId,filter="all"){
  const x=org(state,companyId),me=companyId+"-me";
- return x.tasks.filter(t=>filter==="mine"?t.assignee===me:filter==="open"?!t.done:filter==="done"?t.done:true);
+ return x.tasks.filter(t=>filter==="mine"?t.assignee===me:filter==="open"?!t.done:filter==="done"?t.done:filter==="blocked"?pendingDependencies(t,x.tasks).length>0:true);
 }
 export function counters(state,companyId){
  const x=org(state,companyId);

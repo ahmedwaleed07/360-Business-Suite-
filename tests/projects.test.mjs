@@ -58,6 +58,7 @@ test("duplicate task keeps details but resets completed status",()=>{
 test("remove task and block deletion of nonempty sections",()=>{
  const state=seed(),s=snapshot(state,"atlas").sections[0];
  assert.throws(()=>removeSection(state,"atlas",s.id),/انقل مهام/);
+ updateTask(state,"atlas","a3",{dependencies:[]});
  for(const t of [...snapshot(state,"atlas").tasks].filter(t=>t.sectionId===s.id))removeTask(state,"atlas",t.id);
  assert.equal(removeSection(state,"atlas",s.id),true);
 });
@@ -101,4 +102,21 @@ test("projects UI passes syntax check and never includes database credentials",(
   assert.equal(res.status,0,res.stderr);
  }
  assert.doesNotMatch(html+ui+style,/sb_secret_|service_role|D1_DATABASE_ID|api[_-]?token/i);
+});
+
+test("dependencies prevent cycles, premature completion and orphaned links",()=>{
+ const state=seed(),section=snapshot(state,"atlas").sections[0];
+ const task=addTask(state,"atlas",section.id,"مراجعة العرض",{dependencies:["a3","a3"]});
+ assert.deepEqual(task.dependencies,["a3"]);
+ assert.throws(()=>addTask(state,"atlas",section.id,"مهمة خارج الشركة",{dependencies:["v1"]}),/هذا المشروع/);
+ assert.throws(()=>updateTask(state,"atlas","a1",{title:"تعديل",dependencies:[task.id]}),/دائري/);
+ assert.equal(snapshot(state,"atlas").tasks.find(item=>item.id==="a1").title,"إعداد خطة التواصل مع العملاء");
+ assert.throws(()=>updateTask(state,"atlas","a3",{done:true}),/أكمل المهام/);
+ assert.throws(()=>removeTask(state,"atlas","a1"),/أزل روابط/);
+ assert.deepEqual(visibleTasks(state,"atlas","blocked").map(item=>item.id),["a3",task.id]);
+ updateTask(state,"atlas","a1",{done:true});
+ updateTask(state,"atlas","a3",{done:true});
+ updateTask(state,"atlas",task.id,{done:true});
+ assert.equal(visibleTasks(state,"atlas","blocked").length,0);
+ assert.throws(()=>updateTask(state,"atlas","a1",{done:false}),/أعد فتح/);
 });
