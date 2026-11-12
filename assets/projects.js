@@ -143,18 +143,99 @@ function sectionColumn(s,tasks){
  section.addEventListener("drop",e=>{e.preventDefault();section.classList.remove("dragover");const id=e.dataTransfer?.getData("text/plain");if(id&&data().tasks.some(t=>t.id===id)){protect(()=>updateTask(state,companyId,id,{sectionId:s.id}));render();notify("تم نقل المهمة")}});
  return section;
 }
+const calendarLocale="ar-IQ-u-ca-gregory";
+const calendarTitle=new Intl.DateTimeFormat(calendarLocale,{month:"long",year:"numeric"});
+const dayLabel=new Intl.DateTimeFormat(calendarLocale,{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+const weekday=new Intl.DateTimeFormat(calendarLocale,{weekday:"short"});
+const today=new Date();
+let month=new Date(today.getFullYear(),today.getMonth(),1);
+let chosenDay=null;
+function dateKey(date){
+ return [date.getFullYear(),date.getMonth()+1,date.getDate()].map(n=>String(n).padStart(2,"0")).join("-");
+}
+function renderCalendar(board,tasks){
+ $("calendarMonth").textContent=calendarTitle.format(month);
+ const grid=element("div","calendar-grid");
+ const monthTasks=new Map();
+ for(const task of tasks){
+  if(!task.dueDate.startsWith(dateKey(month).slice(0,7)+"-"))continue;
+  if(!monthTasks.has(task.dueDate))monthTasks.set(task.dueDate,[]);
+  monthTasks.get(task.dueDate).push(task);
+ }
+ const monday=new Date(2024,0,1);
+ const weekOffset=(month.getDay()+1)%7;
+ for(let index=0;index<7;index++){
+  const date=new Date(monday.getFullYear(),monday.getMonth(),monday.getDate()-2+index);
+  grid.append(element("span","calendar-weekday",weekday.format(date)));
+ }
+ for(let index=0;index<weekOffset;index++)grid.append(element("span"));
+ const dayCount=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
+ for(let day=1;day<=dayCount;day++){
+  const date=new Date(month.getFullYear(),month.getMonth(),day);
+  const key=dateKey(date);
+  const count=monthTasks.get(key)?.length||0;
+  const cell=element("button","calendar-day",day);
+  cell.type="button";
+  cell.dataset.date=key;
+  cell.setAttribute("aria-pressed",String(chosenDay===key));
+  cell.setAttribute("aria-label",dayLabel.format(date)+"، عدد المهام "+count);
+  if(key===dateKey(today))cell.setAttribute("aria-current","date");
+  if(count)cell.append(element("small","calendar-count",count));
+  cell.addEventListener("click",()=>{
+   chosenDay=key;
+   render();
+   board.querySelector('[data-date="'+key+'"]')?.focus();
+  });
+  grid.append(cell);
+ }
+ board.append(grid);
+ const agenda=element("section","calendar-agenda");
+ agenda.append(element("h3","",chosenDay?"مهام "+chosenDay:"مهام الشهر"));
+ const dated=chosenDay?monthTasks.get(chosenDay)||[]:[...monthTasks.keys()].sort().flatMap(key=>monthTasks.get(key));
+ for(const task of dated)agenda.append(taskCard(task));
+ if(!dated.length)agenda.append(element("p","help","لا توجد مهام مطابقة في هذه الفترة."));
+ const unscheduled=tasks.filter(task=>!task.dueDate);
+ if(unscheduled.length){
+  agenda.append(element("h3","","مهام بلا موعد"));
+  for(const task of unscheduled)agenda.append(taskCard(task));
+ }
+ board.append(agenda);
+}
+function shiftMonth(change){
+ const origin=change===0?new Date():month;
+ month=new Date(origin.getFullYear(),origin.getMonth()+change,1);
+ chosenDay=null;
+ render();
+}
 function render(){
  closeMenu();stats();
  const b=$("board");b.classList.toggle("list-mode",mode==="list");b.replaceChildren();
  const filtered=visibleTasks(state,companyId,filter);
+ const calendar=mode==="calendar";
+ b.classList.toggle("calendar-mode",calendar);
+ b.setAttribute("aria-label",calendar?"تقويم المشروع":"أقسام المشروع");
+ $("calendarControls").hidden=!calendar;
+ $("boardHints").hidden=calendar;
+ if(calendar){renderCalendar(b,filtered);return}
  for(const s of data().sections)b.append(sectionColumn(s,filtered.filter(t=>t.sectionId===s.id)));
  if(!data().sections.length)b.append(element("p","help","لا توجد أقسام. اضغط قسم جديد وابدأ تنظيم مشروعك."));
 }
 $("companySelect").addEventListener("change",e=>{companyId=e.target.value;closeDialog();render()});
 $("filterTasks").addEventListener("change",e=>{filter=e.target.value;render()});
-function switchMode(next){mode=next;$("boardView").classList.toggle("chosen",next==="board");$("listView").classList.toggle("chosen",next==="list");$("boardView").setAttribute("aria-pressed",String(next==="board"));$("listView").setAttribute("aria-pressed",String(next==="list"));render()}
-$("boardView").addEventListener("click",()=>switchMode("board"));
-$("listView").addEventListener("click",()=>switchMode("list"));
+const viewButtons={board:$("boardView"),list:$("listView"),calendar:$("calendarView")};
+for(const [view,button] of Object.entries(viewButtons)){
+ button.addEventListener("click",()=>{
+  mode=view;
+  for(const [name,control] of Object.entries(viewButtons)){
+   control.classList.toggle("chosen",name===view);
+   control.setAttribute("aria-pressed",String(name===view));
+  }
+  render();
+ });
+}
+$("prevMonth").addEventListener("click",()=>shiftMonth(-1));
+$("nextMonth").addEventListener("click",()=>shiftMonth(1));
+$("currentMonth").addEventListener("click",()=>shiftMonth(0));
 $("createSection").addEventListener("click",e=>openSection(null,e.currentTarget));
 $("taskForm").addEventListener("submit",e=>{
  e.preventDefault();const patch={title:$("taskTitle").value,description:$("taskDescription").value,assignee:$("taskAssignee").value,priority:$("taskPriority").value,sectionId:$("taskSection").value,dueDate:$("taskDue").value,done:$("taskDone").checked};

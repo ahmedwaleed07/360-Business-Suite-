@@ -76,13 +76,20 @@
         <div class="view-switch" aria-label="طريقة العرض">
           <button id="boardView" class="view-button chosen" aria-pressed="true">لوحة</button>
           <button id="listView" class="view-button" aria-pressed="false">قائمة</button>
+          <button id="calendarView" class="view-button" aria-pressed="false">تقويم</button>
         </div>
       </div>
     </section>
     <div class="stats" id="summary" aria-label="ملخص العمل"></div>
-    <div class="hints">
+    <div class="hints" id="boardHints">
       <span><span class="small-dot"></span> اسحب المهمة بين الأقسام على الكمبيوتر، أو استعمل قائمة ⋯ بالموبايل</span>
       <span><kbd>N</kbd> إضافة مهمة بسرعة</span>
+    </div>
+    <div id="calendarControls" class="calendar-controls" hidden>
+      <h3 id="calendarMonth" aria-live="polite"></h3>
+      <button id="prevMonth" class="secondary" type="button">الشهر السابق</button>
+      <button id="currentMonth" class="secondary" type="button">الشهر الحالي</button>
+      <button id="nextMonth" class="secondary" type="button">الشهر التالي</button>
     </div>
     <div id="board" class="board" aria-label="أقسام المشروع"></div>
     <p class="foot-note">تغييرات هذه المعاينة تبقى مؤقتاً بالصفحة وتختفي عند إعادة تحميلها. النسخة الإنتاجية ستستخدم Cloudflare D1 وصلاحيات خادم حقيقية، مو مجرد إخفاء الأزرار.</p>
