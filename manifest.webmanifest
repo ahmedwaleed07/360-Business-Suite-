@@ -1,0 +1,17 @@
+{
+  "id": "./",
+  "name": "360° Business Suite",
+  "short_name": "360° Suite",
+  "description": "معاينة تفاعلية لنظام إدارة الأعمال",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "assets/branding/app-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/branding/app-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

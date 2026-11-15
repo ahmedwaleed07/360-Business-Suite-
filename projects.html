@@ -9,6 +9,8 @@
 <link rel="stylesheet" href="./assets/brand-theme.css">
 <script type="module" src="./assets/brand-gate.js"></script>
 <link rel="icon" type="image/svg+xml" href="./assets/branding/360-infinity.svg">
+<link rel="manifest" href="./manifest.webmanifest">
+<script type="module" src="./assets/install.js"></script>
 </head>
 <body>
 <div id="suiteGate" class="suite-gate" aria-label="شاشة الدخول إلى 360° Business Suite">
@@ -45,6 +47,7 @@
 <div class="workspace">
   <aside class="sidebar" aria-label="التنقل">
     <a href="./index.html" class="brand"><img src="./assets/branding/360-infinity.svg" class="brand-symbol" alt="شعار 360°" /><span class="brand-wordmark">BUSINESS SUITE</span></a>
+    <button id="installSuite" class="secondary" type="button" hidden>تثبيت التطبيق على الكمبيوتر</button>
     <div class="side-heading">WORK MANAGEMENT</div>
     <div class="current-link">▦ <span>المشاريع والمهام</span></div>
     <a href="./index.html" class="back-link">← العودة للوحة التحكم</a>
