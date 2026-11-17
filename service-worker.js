@@ -1,9 +1,9 @@
 const prefix = "360-business-suite-preview-";
-const version = prefix + "v1";
+const version = prefix + "v2";
 const files = [
   "./", "index.html", "projects.html", "manifest.webmanifest",
   "assets/site.css", "assets/brand-theme.css", "assets/projects.css",
-  "assets/site.js", "assets/projects.js", "assets/projects-core.mjs",
+  "assets/site.js", "assets/sales-flow.mjs", "assets/projects.js", "assets/projects-core.mjs",
   "assets/brand-gate.js", "assets/brand-gate-core.mjs", "assets/install.js",
   "assets/branding/360-infinity.svg", "assets/branding/asas360-original-logo.png",
   "assets/branding/app-192.png", "assets/branding/app-512.png"

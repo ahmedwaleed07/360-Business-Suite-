@@ -6,3 +6,9 @@
 @media(max-width:750px){.nav-project-link{white-space:nowrap;padding:8px}}
 
 .adbanner.ad-paused::before,.adbanner.ad-paused::after,.ad-paused .adcopy{animation-play-state:paused}
+
+.sales-flow{margin-block-start:1rem}
+.sales-form{display:flex;flex-wrap:wrap;align-items:end;gap:.75rem;margin-block:1rem}
+.sales-form label{margin:0;min-width:9rem;flex:1}
+.sale-record{padding-block:1rem;border-top:1px solid var(--line)}
+.sale-record h4{margin-block:0 .5rem}

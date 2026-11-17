@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#ffffff">
 <title>360° Business Suite — Interactive Preview</title>
 <link rel="stylesheet" href="assets/site.css">
-<script src="assets/site.js" defer></script>
+<script type="module" src="assets/site.js"></script>
 <link rel="stylesheet" href="assets/brand-theme.css">
 <script type="module" src="./assets/brand-gate.js"></script>
 <link rel="icon" type="image/svg+xml" href="./assets/branding/360-infinity.svg">
@@ -76,7 +76,19 @@
 </section>
 <section id="crm" class="view">
  <div class="headrow"><div><h2>إدارة علاقات العملاء CRM</h2><p>فرص ومتابعات حسب الشركة المحددة — بيانات تجريبية</p></div><button class="mainbtn" id="addCustomer">+ إضافة عميل</button></div>
- <div class="card"><div class="headrow"><h3>قائمة العملاء</h3><input id="customerSearch" type="search" placeholder="بحث عن عميل..." aria-label="بحث"></div><div class="scroll"><table><thead><tr><th>العميل</th><th>مرحلة البيع</th><th>القيمة</th><th>المسؤول</th></tr></thead><tbody id="customersTable"></tbody></table></div></div>
+ <div class="card"><div class="headrow"><h3>قائمة العملاء</h3><input id="customerSearch" type="search" placeholder="بحث عن عميل..." aria-label="بحث"></div><div class="scroll"><table><thead><tr><th>العميل</th><th>مرحلة البيع</th><th>القيمة</th><th>المسؤول</th><th>المعاملات</th></tr></thead><tbody id="customersTable"></tbody></table></div></div>
+ <article class="card sales-flow" id="salesFlow" hidden>
+  <div class="headrow"><h3 id="salesCustomer" tabindex="-1"></h3><button class="mainbtn" id="closeSales" type="button">إغلاق السجل</button></div>
+  <p>معاملات تجريبية مؤقتة. المبالغ بالدولار والكميات بالوحدة.</p>
+  <form id="quoteForm" class="sales-form">
+   <label>الصنف<select name="sku" id="quoteSku" required></select></label>
+   <label>الكمية<input name="quantity" type="number" min="1" max="100000" step="1" required></label>
+   <label>سعر الوحدة<input name="price" type="number" min="0.01" max="1000000" step="0.01" required></label>
+   <button type="submit" class="mainbtn">إنشاء عرض سعر</button>
+  </form>
+  <p id="salesMessage" role="status"></p>
+  <div id="salesOrders"></div>
+ </article>
 </section>
 <section id="erp" class="view"><div class="headrow"><div><h2>المخازن وERP</h2><p>واجهة أولية — المحرك المالي ERPNext غير مربوط حالياً</p></div><span class="chip">Prototype</span></div><div class="card"><h3>الأصناف والكميات</h3><div class="scroll"><table><thead><tr><th>المنتج</th><th>الرمز</th><th>المخزون</th><th>الحالة</th></tr></thead><tbody id="inventoryTable"></tbody></table></div></div></section>
 <section id="workflow" class="view"><div class="headrow"><div><h2>مسارات الموافقات</h2><p>مراحل الموافقة على المشتريات والطلبات</p></div></div><div class="card" id="approvalTable"></div></section>
