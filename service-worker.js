@@ -1,5 +1,5 @@
 const prefix = "360-business-suite-preview-";
-const version = prefix + "v2";
+const version = prefix + "v3";
 const files = [
   "./", "index.html", "projects.html", "manifest.webmanifest",
   "assets/site.css", "assets/brand-theme.css", "assets/projects.css",

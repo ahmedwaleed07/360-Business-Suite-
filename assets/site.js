@@ -1,4 +1,4 @@
-import {createQuote, salesTotals, advanceSale, invoiceBalance, parseCents} from "./sales-flow.mjs";
+import {createQuote, salesTotals, advanceSale, invoiceBalance, parseCents, salesFollowUp} from "./sales-flow.mjs";
 (()=>{
 const $=id=>document.getElementById(id);
 const companies={
@@ -55,6 +55,16 @@ function saleAction(sale, action, label, options={}){
   field.append(input);
   form.append(field);
  }
+ let dueDate;
+ if(action==="invoice"){
+  const field=make("label","تاريخ الاستحقاق");
+  dueDate=make("input");
+  dueDate.type="date";
+  dueDate.value=salesDate();
+  dueDate.required=true;
+  field.append(dueDate);
+  form.append(field);
+ }
  const button=make("button",label,"mainbtn");
  button.type="submit";
  form.append(button);
@@ -62,7 +72,7 @@ function saleAction(sale, action, label, options={}){
   event.preventDefault();
   const amount=input?(options.invoice?parseCents(input.value):Number(input.value)):undefined;
   try {
-   advanceSale(sale,companies[company].stock,action,amount,options.invoice?.id);
+   advanceSale(sale,companies[company].stock,action,amount,{dueDate:dueDate?.value,invoiceId:options.invoice?.id});
    $("salesMessage").textContent="تم تسجيل العملية في المعاينة.";
    render();
    $("salesMessage").focus();
@@ -73,7 +83,62 @@ function saleAction(sale, action, label, options={}){
  return form;
 }
 
+const followUpLabels={
+ quote:"اعتماد عرض السعر", delivery:"تسليم المتبقي", stock:"توفير المخزون",
+ invoice:"فوترة الكمية المسلّمة", receipt:"تحصيل فاتورة", overdue:"تحصيل فاتورة متأخرة"
+};
+const salesDateFormat=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Baghdad",year:"numeric",month:"2-digit",day:"2-digit"});
+function salesDate(){
+ const parts=Object.fromEntries(salesDateFormat.formatToParts(new Date()).map(part=>[part.type,part.value]));
+ return [parts.year,parts.month,parts.day].join("-");
+}
+
+function renderFollowUp(){
+ const current=companies[company];
+ const records=current.leads.flatMap(lead=>(salesByLead.get(lead)||[]).map(sale=>({lead,sale})));
+ const items=salesFollowUp(records,current.stock,salesDate());
+ const sum=entries=>entries.reduce((total,entry)=>total+(entry.balance||0),0);
+ const overdue=items.filter(entry=>entry.type==="overdue");
+ $("followupSummary").textContent="المتبقي للتحصيل "+money(sum(items)/100)+" · المتأخر "+money(sum(overdue)/100);
+ const filter=$("followupFilter").value;
+ const rows=$("followupRows");
+ clear(rows);
+ for(const item of items){
+  if(filter==="receipt" && !item.invoice)continue;
+  if(filter==="operations" && !["quote","delivery","stock"].includes(item.type))continue;
+  if(["overdue","invoice"].includes(filter) && item.type!==filter)continue;
+  const tr=make("tr");
+  const reference=item.invoice?item.sale.id+"-"+item.invoice.id:item.sale.id;
+  const detail=item.invoice
+   ?money(item.balance/100)+" · "+(item.invoice.dueDate||"بدون موعد")
+   :item.quantity?item.quantity+" وحدة":money(salesTotals(item.sale).total/100);
+  for(const value of [item.lead[0]+" · "+item.lead[3],reference,followUpLabels[item.type],detail])tr.append(make("td",value));
+  const action=make("td");
+  const button=make("button","فتح المعاملة","mainbtn");
+  button.type="button";
+  button.addEventListener("click",()=>{
+   selectedLead=item.lead;
+   $("quoteForm").reset();
+   $("salesMessage").textContent="";
+   renderSales();
+   document.getElementById("sale-record-"+item.sale.id)?.focus();
+  });
+  action.append(button);
+  tr.append(action);
+  rows.append(tr);
+ }
+ if(!rows.children.length){
+  const tr=make("tr");
+  const cell=make("td","لا توجد إجراءات مطابقة. افتح سجل مبيعات أي عميل لبدء معاملة.");
+  cell.colSpan=5;
+  tr.append(cell);
+  rows.append(tr);
+ }
+}
+$("followupFilter").addEventListener("change",renderFollowUp);
+
 function renderSales(){
+ renderFollowUp();
  const panel=$("salesFlow");
  panel.hidden=!selectedLead;
  if(!selectedLead)return;
@@ -91,6 +156,8 @@ function renderSales(){
   const article=make("article",undefined,"sale-record");
   const stockItem=stock.find(item=>item[1]===sale.sku);
   const title=sale.confirmed?"أمر بيع":"عرض سعر";
+  article.id="sale-record-"+sale.id;
+  article.tabIndex=-1;
   article.append(make("h4",title+" "+sale.id+" · "+stockItem[0]));
   article.append(row("قيمة الطلب · "+sale.quantity+" وحدة",money(totals.total/100)));
   if(!sale.confirmed){
@@ -110,6 +177,8 @@ function renderSales(){
   for(const invoice of sale.invoices){
    const balance=invoiceBalance(sale,invoice);
    article.append(row("فاتورة "+sale.id+"-"+invoice.id+" · "+invoice.quantity+" وحدة",money(invoice.quantity*sale.unitCents/100)));
+   article.append(row("تاريخ الاستحقاق",invoice.dueDate||"غير محدد"));
+   article.append(row("المتبقي على الفاتورة",money(balance/100)));
    for(const receipt of sale.receipts.filter(item=>item.invoiceId===invoice.id)){
     article.append(row("سند قبض "+sale.id+"-"+receipt.id,money(receipt.cents/100)));
    }

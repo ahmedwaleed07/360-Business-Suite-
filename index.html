@@ -76,6 +76,17 @@
 </section>
 <section id="crm" class="view">
  <div class="headrow"><div><h2>إدارة علاقات العملاء CRM</h2><p>فرص ومتابعات حسب الشركة المحددة — بيانات تجريبية</p></div><button class="mainbtn" id="addCustomer">+ إضافة عميل</button></div>
+ <section class="card sales-followup" aria-labelledby="followupTitle">
+  <div class="headrow">
+   <div><h3 id="followupTitle">متابعة المبيعات والتحصيل</h3><p id="followupSummary"></p></div>
+   <label>الإجراءات<select id="followupFilter">
+    <option value="all">كل الإجراءات</option><option value="overdue">الفواتير المتأخرة</option>
+    <option value="receipt">التحصيل المفتوح</option><option value="invoice">بانتظار الفوترة</option>
+    <option value="operations">العروض والتسليم والمخزون</option>
+   </select></label>
+  </div>
+  <div class="scroll"><table><thead><tr><th scope="col">العميل والمسؤول</th><th scope="col">المعاملة</th><th scope="col">المطلوب</th><th scope="col">التفاصيل</th><th scope="col">السجل</th></tr></thead><tbody id="followupRows"></tbody></table></div>
+ </section>
  <div class="card"><div class="headrow"><h3>قائمة العملاء</h3><input id="customerSearch" type="search" placeholder="بحث عن عميل..." aria-label="بحث"></div><div class="scroll"><table><thead><tr><th>العميل</th><th>مرحلة البيع</th><th>القيمة</th><th>المسؤول</th><th>المعاملات</th></tr></thead><tbody id="customersTable"></tbody></table></div></div>
  <article class="card sales-flow" id="salesFlow" hidden>
   <div class="headrow"><h3 id="salesCustomer" tabindex="-1"></h3><button class="mainbtn" id="closeSales" type="button">إغلاق السجل</button></div>

@@ -12,3 +12,6 @@
 .sales-form label{margin:0;min-width:9rem;flex:1}
 .sale-record{padding-block:1rem;border-top:1px solid var(--line)}
 .sale-record h4{margin-block:0 .5rem}
+.sales-followup{margin-block:1rem}
+.sales-followup .headrow{margin-block:0 .75rem}
+.sales-followup .headrow label{margin:0;min-width:12rem}

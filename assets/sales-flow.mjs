@@ -31,7 +31,7 @@ export function invoiceBalance(sale, invoice) {
   .reduce((total, receipt) => total + receipt.cents, 0);
 }
 
-export function advanceSale(sale, stock, action, amount, invoiceId) {
+export function advanceSale(sale, stock, action, amount, {invoiceId, dueDate} = {}) {
  const totals = salesTotals(sale);
  if(action === "confirm" && !sale.confirmed) {
   sale.confirmed = true;
@@ -47,7 +47,8 @@ export function advanceSale(sale, stock, action, amount, invoiceId) {
   item[2] -= amount;
  } else if(action === "invoice") {
   if(!positiveInteger(amount, totals.toInvoice)) throw Error("فوْتر فقط الكمية المسلّمة التي لم تُفوتر بعد.");
-  sale.invoices.push({id:sale.invoices.length + 1, quantity:amount});
+  if(dueDate !== undefined && !validDate(dueDate)) throw Error("أدخل تاريخ استحقاق صالحاً.");
+  sale.invoices.push({id:sale.invoices.length + 1, quantity:amount, dueDate});
  } else if(action === "receive") {
   const invoice = sale.invoices.find(entry => entry.id === invoiceId);
   if(!invoice || !positiveInteger(amount, invoiceBalance(sale, invoice))) {
@@ -63,4 +64,34 @@ export function parseCents(value) {
  const match = /^(\d{1,10})(?:\.(\d{1,2}))?$/.exec(String(value).trim());
  if(!match) return NaN;
  return Number(match[1]) * 100 + Number((match[2] || "").padEnd(2, "0"));
+}
+
+function validDate(value) {
+ if(typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+ const date = new Date(value + "T00:00:00Z");
+ return !Number.isNaN(date.valueOf()) && date.toISOString().slice(0,10) === value;
+}
+
+export function salesFollowUp(records, stock, today) {
+ const items = [];
+ for(const {lead, sale} of records) {
+  const add = (type, details = {}) => items.push({type, lead, sale, ...details});
+  if(!sale.confirmed) {
+   add("quote");
+   continue;
+  }
+  const totals = salesTotals(sale);
+  if(totals.toDeliver > 0) {
+   const available = stock.find(item => item[1] === sale.sku)?.[2] ?? 0;
+   add(available > 0 ? "delivery" : "stock", {quantity:totals.toDeliver});
+  }
+  if(totals.toInvoice > 0) add("invoice", {quantity:totals.toInvoice});
+  for(const invoice of sale.invoices) {
+   const balance = invoiceBalance(sale, invoice);
+   if(balance > 0) add(invoice.dueDate && invoice.dueDate < today ? "overdue" : "receipt", {invoice, balance});
+  }
+ }
+ const order = ["overdue", "receipt", "invoice", "stock", "delivery", "quote"];
+ return items.sort((a,b) => order.indexOf(a.type) - order.indexOf(b.type) ||
+  (a.invoice?.dueDate || "9999-12-31").localeCompare(b.invoice?.dueDate || "9999-12-31"));
 }
